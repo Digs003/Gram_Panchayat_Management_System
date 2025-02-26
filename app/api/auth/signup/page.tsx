@@ -1,8 +1,14 @@
-import Link from "next/link"
-import { Building2, Users2, User, LineChart } from "lucide-react"
+import Link from "next/link";
+import { Building2, Users2, User, LineChart } from "lucide-react";
 
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 export default function LoginRedirectPage() {
   return (
@@ -14,7 +20,8 @@ export default function LoginRedirectPage() {
               Welcome to Gram Panchayat Portal
             </h1>
             <p className="mx-auto max-w-[600px] text-lg text-muted-foreground">
-              Please select your user type to proceed to the appropriate login page
+              Please select your user type to proceed to the appropriate login
+              page
             </p>
           </div>
 
@@ -29,10 +36,15 @@ export default function LoginRedirectPage() {
                   <CardTitle className="text-xl transition-colors group-hover:text-primary">
                     System Administrator
                   </CardTitle>
-                  <CardDescription className="text-sm">Portal management and system configuration</CardDescription>
+                  <CardDescription className="text-sm">
+                    Portal management and system configuration
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Button className="w-full transition-transform duration-300 group-hover:scale-105 bg-indigo-900" variant="default">
+                  <Button
+                    className="w-full transition-transform duration-300 group-hover:scale-105 bg-indigo-900"
+                    variant="default"
+                  >
                     Login as Administrator
                   </Button>
                 </CardContent>
@@ -54,7 +66,10 @@ export default function LoginRedirectPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Button className="w-full transition-transform duration-300 group-hover:scale-105 bg-indigo-900" variant="default">
+                  <Button
+                    className="w-full transition-transform duration-300 group-hover:scale-105 bg-indigo-900"
+                    variant="default"
+                  >
                     Login as Employee
                   </Button>
                 </CardContent>
@@ -68,11 +83,18 @@ export default function LoginRedirectPage() {
                   <div className="relative mx-auto mb-4 size-16 rounded-full bg-primary/10 p-3 transition-transform duration-300 group-hover:scale-110">
                     <User className="size-full text-primary" />
                   </div>
-                  <CardTitle className="text-xl transition-colors group-hover:text-primary">Citizen</CardTitle>
-                  <CardDescription className="text-sm">Access public services and submit applications</CardDescription>
+                  <CardTitle className="text-xl transition-colors group-hover:text-primary">
+                    Citizen
+                  </CardTitle>
+                  <CardDescription className="text-sm">
+                    Access public services and submit applications
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Button className="w-full transition-transform duration-300 group-hover:scale-105 bg-indigo-900" variant="default">
+                  <Button
+                    className="w-full transition-transform duration-300 group-hover:scale-105 bg-indigo-900"
+                    variant="default"
+                  >
                     Login as Citizen
                   </Button>
                 </CardContent>
@@ -89,10 +111,15 @@ export default function LoginRedirectPage() {
                   <CardTitle className="text-xl transition-colors group-hover:text-primary">
                     Government Monitor
                   </CardTitle>
-                  <CardDescription className="text-sm">Monitor and analyze panchayat activities</CardDescription>
+                  <CardDescription className="text-sm">
+                    Monitor and analyze panchayat activities
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Button className="w-full transition-transform duration-300 group-hover:scale-105 bg-indigo-900" variant="default">
+                  <Button
+                    className="w-full transition-transform duration-300 group-hover:scale-105 bg-indigo-900"
+                    variant="default"
+                  >
                     Login as Monitor
                   </Button>
                 </CardContent>
@@ -101,13 +128,15 @@ export default function LoginRedirectPage() {
           </div>
           <p className="text-sm text-muted-foreground text-center">
             Already have an account?{" "}
-            <Link href="/sign-in" className="text-primary hover:underline font-medium">
+            <Link
+              href="/api/auth/signin"
+              className="text-primary hover:underline font-medium"
+            >
               Sign In
             </Link>
           </p>
         </div>
       </div>
     </main>
-  )
+  );
 }
-

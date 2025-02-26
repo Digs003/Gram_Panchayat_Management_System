@@ -1,11 +1,21 @@
-"use client";
-import { signIn, signOut } from "next-auth/react";
+import { getUser } from "@/lib/actions/getUser";
 
-export default function Appbar() {
+async function getDetails() {
+  const user = await getUser();
+
+  return {
+    name: user.rows[0].name,
+    email: user.rows[0].email,
+  };
+}
+
+export default async function Appbar() {
+  const user = await getDetails();
   return (
-    <div>
-      <button onClick={() => signIn()}>Signin</button>
-      <button onClick={() => signOut()}>Sign out</button>
-    </div>
+    <>
+      <div>
+        {user ? <p>Welcome, {user.name}!</p> : <p>You are not signed in.</p>}
+      </div>
+    </>
   );
 }
