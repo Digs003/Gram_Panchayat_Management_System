@@ -26,7 +26,7 @@ export default function LoginRedirectPage() {
           </div>
 
           <div className="grid gap-6 sm:grid-cols-2">
-            <Link href="/sign-up/admin" className="block">
+            <Link href="/api/auth/signup/admin" className="block">
               <Card className="group relative h-full overflow-hidden border-2 transition-all duration-300 hover:border-primary hover:shadow-lg">
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                 <CardHeader>
@@ -51,7 +51,7 @@ export default function LoginRedirectPage() {
               </Card>
             </Link>
 
-            <Link href="/sign-up/employee" className="block">
+            <Link href="/api/auth/signup/employee" className="block">
               <Card className="group relative h-full overflow-hidden border-2 transition-all duration-300 hover:border-primary hover:shadow-lg">
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                 <CardHeader>
@@ -76,7 +76,7 @@ export default function LoginRedirectPage() {
               </Card>
             </Link>
 
-            <Link href="/sign-up/citizen" className="block">
+            <Link href="/api/auth/signup/citizen" className="block">
               <Card className="group relative h-full overflow-hidden border-2 transition-all duration-300 hover:border-primary hover:shadow-lg">
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                 <CardHeader>
@@ -101,7 +101,7 @@ export default function LoginRedirectPage() {
               </Card>
             </Link>
 
-            <Link href="/sign-up/monitor" className="block">
+            <Link href="/api/auth/signup/monitor" className="block">
               <Card className="group relative h-full overflow-hidden border-2 transition-all duration-300 hover:border-primary hover:shadow-lg">
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                 <CardHeader>

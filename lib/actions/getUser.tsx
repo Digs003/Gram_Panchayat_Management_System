@@ -11,7 +11,7 @@ const pool = new Pool({
 
 export async function getUser() {
   const session = await getServerSession(authOptions);
-  const userId = session?.user?.id; // Assuming email is used as the identifier
+  const userId = session?.user?.id;
   const user = await pool.query("SELECT * FROM citizen WHERE citizen_id = $1", [
     userId,
   ]);
