@@ -33,9 +33,8 @@ export default function SignIn() {
       redirect: false,
     });
 
-    console.log(res);
     if (res?.error) {
-      console.error("Failed to sign in");
+      alert("Enter Correct information");
     } else {
       router.push("/");
     }

@@ -27,9 +27,9 @@ export const authOptions = {
 
         let client: any;
         try {
-          console.log("Connecting to database");
+          //console.log("Connecting to database");
           client = await pool.connect();
-          console.log("Client connected");
+          //console.log("Client connected");
           const existing_user = await client.query(
             "SELECT * FROM login WHERE username = $1",
             [credentials.email]
@@ -39,7 +39,7 @@ export const authOptions = {
             return null;
           }
           const user = existing_user.rows[0];
-          console.log("User", user);
+          //console.log("User", user);
           // const match = await bcrypt.compare(
           //   credentials.password,
           //   user.password
