@@ -11,20 +11,20 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const {
       name,
-      email,
+      aadhar,
       password,
       contactNumber: contact_number,
       gender,
       dob,
       occupation,
       age,
-      educationalQualification: educational_qualfication,
+      educationalQualifications: educational_qualfication,
     } = body;
     const client = await pool.connect();
     try {
       const existing_user = await client.query(
         "SELECT * FROM login WHERE username=$1",
-        [email]
+        [aadhar]
       );
       if (existing_user.rows.length > 0) {
         return NextResponse.json(
@@ -32,15 +32,16 @@ export async function POST(req: NextRequest) {
           { status: 400 }
         );
       }
+
       await client.query("BEGIN");
       const user = await client.query(
-        "INSERT INTO citizen(name, gender, dob, contact_number, email, occupation, age, educational_qualification) VALUES($1, $2, $3, $4, $5, $6, $7, $8) RETURNING citizen_id",
+        "INSERT INTO citizen(name, gender, dob, contact_number, aadhar_id, occupation, age, educational_qualification) VALUES($1, $2, $3, $4, $5, $6, $7, $8) RETURNING citizen_id",
         [
           name,
           gender,
           dob,
           contact_number,
-          email,
+          aadhar,
           occupation,
           age,
           educational_qualfication,
@@ -49,7 +50,7 @@ export async function POST(req: NextRequest) {
 
       await client.query(
         "INSERT INTO login(username,password,user_type,citizen_id) VALUES($1, $2, $3, $4)",
-        [email, password, "Citizens", user.rows[0].citizen_id]
+        [aadhar, password, "Citizens", user.rows[0].citizen_id]
       );
       await client.query("COMMIT");
 

@@ -13,14 +13,14 @@ export const authOptions = {
       name: "Credentials",
       credentials: {
         password: { label: "Password", type: "password" },
-        email: {
-          label: "Email",
-          type: "email",
-          placeholder: "abcd@emaple.com",
+        username: {
+          label: "Username",
+          type: "text",
+          placeholder: "Enter your Aadhar Number",
         },
       },
       async authorize(credentials: any) {
-        if (!credentials.password || !credentials.email) {
+        if (!credentials.password || !credentials.username) {
           console.log("Missing required fields");
           return null;
         }
@@ -32,13 +32,17 @@ export const authOptions = {
           //console.log("Client connected");
           const existing_user = await client.query(
             "SELECT * FROM login WHERE username = $1",
-            [credentials.email]
+            [credentials.username]
           );
           if (existing_user.rows.length === 0) {
             console.log("User not found");
             return null;
           }
           const user = existing_user.rows[0];
+          if (user.password !== credentials.password) {
+            console.log("Password does not match");
+            return null;
+          }
           //console.log("User", user);
           // const match = await bcrypt.compare(
           //   credentials.password,
@@ -48,7 +52,7 @@ export const authOptions = {
           //   console.log("Password does not match");
           //   return null;
           // }
-          return { id: user.citizen_id, email: user.username };
+          return { id: user.citizen_id, username: user.username };
         } catch (e) {
           console.error("DATABASE ERROR", e);
           return null;

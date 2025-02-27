@@ -19,17 +19,17 @@ import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
 export default function SignIn() {
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const router = useRouter();
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    console.log("Email:", email);
+    console.log("Email:", username);
     console.log("Password:", password);
     const res = await signIn("credentials", {
       password,
-      email,
+      username,
       redirect: false,
     });
 
@@ -57,15 +57,15 @@ export default function SignIn() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email Address</Label>
+              <Label htmlFor="username">Aadhar Number</Label>
               <Input
-                id="email"
-                placeholder="Enter your email"
-                type="email"
+                id="username"
+                placeholder="Enter your Aadhar Number"
+                type="text"
                 required
                 className="bg-white"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
               />
             </div>
             <div className="space-y-2">

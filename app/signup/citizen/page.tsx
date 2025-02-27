@@ -64,8 +64,8 @@ const formSchema = z
     educationalQualifications: z.string({
       required_error: "Please select an Educational Qualification.",
     }),
-    email: z.string().email({
-      message: "Please enter a valid email address.",
+    aadhar: z.string().regex(/^\d{12}$/, {
+      message: "Aadhar ID must be exactly 12 digits.",
     }),
     password: z.string().min(8, {
       message: "Password must be at least 8 characters.",
@@ -158,7 +158,7 @@ export default function SignUpForm() {
       contactNumber: "",
       age: 0,
       educationalQualifications: "",
-      email: "",
+      aadhar: "",
       occupation: "",
       password: "",
       confirmPassword: "",
@@ -200,7 +200,11 @@ export default function SignUpForm() {
         alert("Registration Successful");
         router.push("/api/auth/signin");
       } else {
-        alert("Registration Failed");
+        if (response.status == 400) {
+          alert("User with this email id already exists");
+        } else {
+          alert("Registration Failed");
+        }
       }
     } catch (err) {
       console.error("Registration Error:", err);
@@ -419,13 +423,13 @@ export default function SignUpForm() {
 
               <FormField
                 control={form.control}
-                name="email"
+                name="aadhar"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email Address</FormLabel>
+                    <FormLabel>Aadhar Number</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="Enter your email address"
+                        placeholder="Enter your aadhar number"
                         {...field}
                       />
                     </FormControl>
