@@ -56,6 +56,7 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { useRouter } from "next/navigation";
 
 const occupations = [
   { label: "Farmer", value: "farmer" },
@@ -205,6 +206,7 @@ export default function CitizenTable({
   const [filteredCitizens, setFilteredCitizens] = useState(citizenList);
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const router = useRouter();
   const [editingCitizen, setEditingCitizen] = useState<citizentype | null>(
     null
   );
@@ -218,6 +220,7 @@ export default function CitizenTable({
       dob: new Date(),
       age: 0,
       educational_qualification: "",
+      occupation: "",
     },
   });
 
@@ -240,17 +243,8 @@ export default function CitizenTable({
     setFilteredCitizens(results);
   }, [searchTerm, citizens]);
 
-  const openAddDialog = () => {
-    form.reset({
-      name: "",
-      aadhar_id: "",
-      contact_number: "",
-      dob: new Date(),
-      age: 0,
-      educational_qualification: "",
-    });
-    setEditingCitizen(null);
-    setIsDialogOpen(true);
+  const redirect = () => {
+    router.push("/signup/citizen");
   };
 
   const handleEdit = (citizen) => {
@@ -259,6 +253,7 @@ export default function CitizenTable({
       age: citizen.age,
       dob: new Date(citizen.dob),
       aadhar_id: citizen.aadhar_id,
+      occupation: citizen.occupation,
       contact_number: citizen.contact_number,
       educational_qualification: citizen.educational_qualification,
     });
@@ -266,31 +261,48 @@ export default function CitizenTable({
     setIsDialogOpen(true);
   };
 
-  const handleDelete = (id) => {
-    setCitizens(citizens.filter((citizen) => citizen.id !== id));
+  const handleDelete = async (aadhar_id) => {
+    try {
+      const response = await fetch(`/api/citizens/delete`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          aadhar_id: aadhar_id,
+        }),
+      });
+      if (!response.ok) {
+        alert("Failed to delete citizen. Please try again.");
+      }
+    } catch (e) {
+      console.error("Error deleting citizen:", e);
+    }
+    setCitizens(citizens.filter((citizen) => citizen.aadhar_id !== aadhar_id));
   };
 
-  const onSubmit = (data) => {
+  const onSubmit = async (data) => {
     console.log("Form data:", data);
-    // Calculate age from date of birth
-    const today = new Date();
-    const birthDate = new Date(data.dob);
-
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-    if (
-      monthDiff < 0 ||
-      (monthDiff === 0 && today.getDate() < birthDate.getDate())
-    ) {
-      age--;
-    }
 
     if (editingCitizen) {
+      try {
+        const response = await fetch(`/api/citizens/update`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: data.name,
+            aadhar_id: data.aadhar_id, // Ensure it's included
+            contact_number: data.contact_number,
+            educational_qualification: data.educational_qualification,
+          }),
+        });
+        if (!response.ok) {
+          alert("Failed to update citizen. Please try again.");
+        }
+      } catch (e) {
+        console.error("Error updating citizen:", e);
+      }
       setCitizens(
         citizens.map((citizen) =>
-          citizen.aadhar_id === editingCitizen.aadhar_id
-            ? { ...data, age }
-            : citizen
+          citizen.aadhar_id === editingCitizen.aadhar_id ? { ...data } : citizen
         )
       );
     } else {
@@ -318,7 +330,7 @@ export default function CitizenTable({
             Citizen Registry
           </CardTitle>
           <Button
-            onClick={openAddDialog}
+            onClick={redirect}
             className="bg-indigo-600 hover:bg-indigo-700"
           >
             <Plus className="mr-2 h-4 w-4" /> Add Citizen
@@ -434,7 +446,7 @@ export default function CitizenTable({
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleDelete(citizen.id)}
+                            onClick={() => handleDelete(citizen.aadhar_id)}
                             className="h-8 w-8 p-0 text-red-600 border-red-200 hover:bg-red-50"
                           >
                             <Trash className="h-4 w-4" />
@@ -499,6 +511,7 @@ export default function CitizenTable({
                           placeholder="Aadhar Number"
                           {...field}
                           className="border-slate-200"
+                          disabled
                         />
                       </FormControl>
                       <FormMessage />
@@ -575,6 +588,7 @@ export default function CitizenTable({
                   onClick={() => {
                     console.log("Submit button clicked");
                     console.log("Form state error", form.formState.errors);
+                    form.handleSubmit(onSubmit);
                   }}
                 >
                   {editingCitizen ? "Save Changes" : "Add Citizen"}
