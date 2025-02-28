@@ -1,17 +1,7 @@
 "use client";
 
 import CitizenTable from "@/components/citizen_info";
-import { LogOut } from "lucide-react";
 import React, { useState, useEffect } from "react";
-import { signOut } from "next-auth/react";
-import { getUser } from "@/lib/actions/getUser";
-import { useRouter } from "next/navigation";
-import { getCitizen } from "@/lib/actions/getCitizen";
-import { z } from "zod";
-
-const handleSignOut = async () => {
-  await signOut({ callbackUrl: "/api/auth/signin" });
-};
 
 interface SidebarItem {
   id: string;
@@ -24,23 +14,6 @@ const sidebarItems: SidebarItem[] = [
   { id: "Government Monitors", label: "Government Monitors" },
   { id: "Personal Info", label: "Personal Info" },
 ];
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const citizenSchema = z.object({
-  name: z.string().min(2, { message: "Name must be at least 2 characters." }),
-  aadhar_id: z.string().email({ message: "Invalid email address." }),
-  age: z.number(),
-  contact_number: z
-    .string()
-    .min(10, { message: "Phone number must be at least 10 digits." }),
-  occupation: z.string({ required_error: "Occupation is required." }),
-  dob: z.date({ required_error: "Date of birth is required." }),
-  educational_qualification: z.string({
-    required_error: "Qualification is required.",
-  }),
-});
-
-type citizentype = z.infer<typeof citizenSchema>;
 
 const Sidebar = ({
   activeItem,
@@ -101,15 +74,6 @@ const Sidebar = ({
             ))}
           </ul>
         </nav>
-        <div className="absolute bottom-0 w-full p-4 border-t border-gray-200">
-          <button
-            onClick={handleSignOut}
-            className="flex items-center w-full p-3 rounded-md transition-colors hover:bg-gray-100 text-gray-700"
-          >
-            <LogOut size={24} className="mr-2" />
-            <span className="font-medium">Sign Out</span>
-          </button>
-        </div>
       </aside>
     </>
   );
@@ -119,10 +83,7 @@ const Sidebar = ({
 const Header = ({ setIsOpen }: { setIsOpen: (isOpen: boolean) => void }) => {
   return (
     <header className="md:hidden bg-white border-b border-gray-200 px-4 py-3 flex items-center shadow-sm">
-      <button
-        className="te</svg>xt-gray-600 mr-4"
-        onClick={() => setIsOpen(true)}
-      >
+      <button className="text-gray-600 mr-4" onClick={() => setIsOpen(true)}>
         ☰
       </button>
       <h1 className="text-lg font-bold text-blue-600">MyApp</h1>
@@ -132,32 +93,17 @@ const Header = ({ setIsOpen }: { setIsOpen: (isOpen: boolean) => void }) => {
 
 // Main content component
 const Content = ({ activeItem }: { activeItem: string }) => {
-  const [citizens, setCitizens] = useState<citizentype[]>([]);
-  useEffect(() => {
-    const fetchCitizens = async () => {
-      try {
-        const data = await getCitizen();
-        console.log(data.user);
-        setCitizens(data.user);
-      } catch (e) {
-        console.error("Error fetching citizens", e);
-      }
-    };
-    fetchCitizens();
-  }, []);
   switch (activeItem) {
     case "Citizen":
-      console.log("hi");
-      console.log("citizen: ", citizens);
-      return <CitizenTable citizenList={citizens} />;
+      return <CitizenTable />;
     case "Panchayat Employee":
-      return <CitizenTable citizenList={citizens} />;
+      return <CitizenTable />;
     case "Government Monitors":
-      return <CitizenTable citizenList={citizens} />;
+      return <CitizenTable />;
     case "Personal Info":
-      return <CitizenTable citizenList={citizens} />;
+      return <CitizenTable />;
     default:
-      return <CitizenTable citizenList={citizens} />;
+      return <CitizenTable />;
   }
 };
 
@@ -166,20 +112,9 @@ export default function Page() {
   const [activeItem, setActiveItem] = useState("Citizen");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const router = useRouter();
 
   // Check if we're on a mobile device on initial render and window resize
   useEffect(() => {
-    const checkUserType = async () => {
-      const { user } = await getUser();
-      if (!user) {
-        router.push("/");
-      }
-      if (user.occupation !== "System Administrator") {
-        router.push("/");
-      }
-    };
-    checkUserType();
     const checkIfMobile = () => {
       setIsMobile(window.innerWidth < 768);
       if (window.innerWidth >= 768) {

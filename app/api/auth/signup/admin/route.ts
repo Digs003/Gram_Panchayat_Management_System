@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
       contactNumber: contact_number,
       gender,
       dob,
-      por: position,
+      email,
       dateofjoining,
       age,
       educationalQualifications: educational_qualfication,
@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
           dob,
           contact_number,
           aadhar,
-          "Panchayat Employee",
+          "System Administrator",
           age,
           educational_qualfication,
         ]
@@ -51,12 +51,12 @@ export async function POST(req: NextRequest) {
 
       await client.query(
         "INSERT INTO login(username,password,user_type,citizen_id) VALUES($1, $2, $3, $4)",
-        [aadhar, password, "Panchayat Employees", user.rows[0].citizen_id]
+        [aadhar, password, "System Administrator", user.rows[0].citizen_id]
       );
 
       await client.query(
-        "INSERT INTO members(citizen_id, position, date_of_joining) VALUES($1, $2, $3)",
-        [user.rows[0].citizen_id, position, dateofjoining]
+        "INSERT INTO admin(citizen_id, email, date_of_joining) VALUES($1, $2, $3)",
+        [user.rows[0].citizen_id, email, dateofjoining]
       );
       await client.query("COMMIT");
 

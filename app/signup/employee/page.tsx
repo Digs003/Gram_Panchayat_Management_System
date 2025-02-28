@@ -86,10 +86,19 @@ const PORs = [
   { label: "Gram Pradhan (Sarpanch)", value: "gram_pradhan" },
   { label: "Up-Pradhan (Deputy Pradhan)", value: "up_pradhan" },
   { label: "Panchayat Secretary", value: "panchayat_secretary" },
-  { label: "Panchayat Development Officer", value: "panchayat_development_officer" },
+  {
+    label: "Panchayat Development Officer",
+    value: "panchayat_development_officer",
+  },
   { label: "Ward Member (Panch)", value: "ward_member" },
-  { label: "Panchayat Executive Assistant", value: "panchayat_executive_assistant" },
-  { label: "Block Development Officer (BDO)", value: "block_development_officer" },
+  {
+    label: "Panchayat Executive Assistant",
+    value: "panchayat_executive_assistant",
+  },
+  {
+    label: "Block Development Officer (BDO)",
+    value: "block_development_officer",
+  },
   { label: "Village Revenue Officer", value: "village_revenue_officer" },
   { label: "Panchayat Clerk", value: "panchayat_clerk" },
   { label: "Village Accountant", value: "village_accountant" },
@@ -161,29 +170,29 @@ export default function SignUpForm() {
   }, [dob, form]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
-    // try {
-    //   const response = await fetch("/api/auth/signup/employee", {
-    //     method: "POST",
-    //     headers: {
-    //       "Content-Type": "application/json",
-    //     },
-    //     body: JSON.stringify(values),
-    //   });
-    //   //const data=await response.json();
-    //   if (response.ok) {
-    //     alert("Registration Successful");
-    //     router.push("/api/auth/signin");
-    //   } else {
-    //     if (response.status == 400) {
-    //       alert("User with this email id already exists");
-    //     } else {
-    //       alert("Registration Failed");
-    //     }
-    //   }
-    // } catch (err) {
-    //   console.error("Registration Error:", err);
-    // }
+    //console.log(values);
+    try {
+      const response = await fetch("/api/auth/signup/employee", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(values),
+      });
+      //const data=await response.json();
+      if (response.ok) {
+        alert("Registration Successful");
+        router.push("/api/auth/signin");
+      } else {
+        if (response.status == 400) {
+          alert("User with this email id already exists");
+        } else {
+          alert("Registration Failed");
+        }
+      }
+    } catch (err) {
+      console.error("Registration Error:", err);
+    }
   }
 
   return (
@@ -334,8 +343,6 @@ export default function SignUpForm() {
                 )}
               />
 
-              
-
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
                   control={form.control}
@@ -379,7 +386,7 @@ export default function SignUpForm() {
                   )}
                 />
 
-                  <FormField
+                <FormField
                   control={form.control}
                   name="por"
                   render={({ field }) => (
@@ -396,10 +403,7 @@ export default function SignUpForm() {
                         </FormControl>
                         <SelectContent>
                           {PORs.map((por) => (
-                            <SelectItem
-                              key={por.value}
-                              value={por.value}
-                            >
+                            <SelectItem key={por.value} value={por.value}>
                               {por.label}
                             </SelectItem>
                           ))}
@@ -535,8 +539,7 @@ export default function SignUpForm() {
         </CardContent>
         <CardFooter className="flex justify-center border-t pt-6">
           <p className="text-sm text-muted-foreground">
-            By registering, you can access the Portal to apply for various
-            government schemes and services.
+            By registering, you can access the Portal to manage your Panchayat
           </p>
         </CardFooter>
       </Card>

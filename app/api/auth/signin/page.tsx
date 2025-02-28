@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { getUser } from "@/lib/actions/getUser";
 
 export default function SignIn() {
   const [username, setUsername] = useState("");
@@ -36,7 +37,16 @@ export default function SignIn() {
     if (res?.error) {
       alert("Enter Correct information");
     } else {
-      router.push("/");
+      const { user } = await getUser();
+      if (user.occupation === "Panchayat Employee") {
+        router.push("/employee/dashboard");
+      } else if (user.occupation === "Government Monitor") {
+        router.push("/monitor/dashboard");
+      } else if (user.occupation === "System Administrator") {
+        router.push("/admin/dashboard");
+      } else {
+        router.push("/citizen/dashboard");
+      }
     }
   };
 

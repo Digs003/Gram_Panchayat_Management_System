@@ -12,8 +12,16 @@ const pool = new Pool({
 export async function getUser() {
   const session = await getServerSession(authOptions);
   const userId = session?.user?.id;
-  const user = await pool.query("SELECT * FROM citizen WHERE citizen_id = $1", [
-    userId,
-  ]);
-  return user;
+  const result = await pool.query(
+    "SELECT * FROM citizen WHERE citizen_id = $1",
+    [userId]
+  );
+  if (result.rows.length > 0) {
+    return {
+      user: JSON.parse(JSON.stringify(result.rows[0])),
+    };
+  }
+  return {
+    user: null,
+  };
 }

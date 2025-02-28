@@ -6,8 +6,6 @@ import React, { useState, useEffect } from "react";
 import { signOut } from "next-auth/react";
 import { getUser } from "@/lib/actions/getUser";
 import { useRouter } from "next/navigation";
-import { getCitizen } from "@/lib/actions/getCitizen";
-import { z } from "zod";
 
 const handleSignOut = async () => {
   await signOut({ callbackUrl: "/api/auth/signin" });
@@ -24,23 +22,6 @@ const sidebarItems: SidebarItem[] = [
   { id: "Government Monitors", label: "Government Monitors" },
   { id: "Personal Info", label: "Personal Info" },
 ];
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const citizenSchema = z.object({
-  name: z.string().min(2, { message: "Name must be at least 2 characters." }),
-  aadhar_id: z.string().email({ message: "Invalid email address." }),
-  age: z.number(),
-  contact_number: z
-    .string()
-    .min(10, { message: "Phone number must be at least 10 digits." }),
-  occupation: z.string({ required_error: "Occupation is required." }),
-  dob: z.date({ required_error: "Date of birth is required." }),
-  educational_qualification: z.string({
-    required_error: "Qualification is required.",
-  }),
-});
-
-type citizentype = z.infer<typeof citizenSchema>;
 
 const Sidebar = ({
   activeItem,
@@ -132,32 +113,17 @@ const Header = ({ setIsOpen }: { setIsOpen: (isOpen: boolean) => void }) => {
 
 // Main content component
 const Content = ({ activeItem }: { activeItem: string }) => {
-  const [citizens, setCitizens] = useState<citizentype[]>([]);
-  useEffect(() => {
-    const fetchCitizens = async () => {
-      try {
-        const data = await getCitizen();
-        console.log(data.user);
-        setCitizens(data.user);
-      } catch (e) {
-        console.error("Error fetching citizens", e);
-      }
-    };
-    fetchCitizens();
-  }, []);
   switch (activeItem) {
     case "Citizen":
-      console.log("hi");
-      console.log("citizen: ", citizens);
-      return <CitizenTable citizenList={citizens} />;
+      return <CitizenTable />;
     case "Panchayat Employee":
-      return <CitizenTable citizenList={citizens} />;
+      return <CitizenTable />;
     case "Government Monitors":
-      return <CitizenTable citizenList={citizens} />;
+      return <CitizenTable />;
     case "Personal Info":
-      return <CitizenTable citizenList={citizens} />;
+      return <CitizenTable />;
     default:
-      return <CitizenTable citizenList={citizens} />;
+      return <CitizenTable />;
   }
 };
 
@@ -172,10 +138,7 @@ export default function Page() {
   useEffect(() => {
     const checkUserType = async () => {
       const { user } = await getUser();
-      if (!user) {
-        router.push("/");
-      }
-      if (user.occupation !== "System Administrator") {
+      if (user.occupation !== "Panchayat Employee") {
         router.push("/");
       }
     };
