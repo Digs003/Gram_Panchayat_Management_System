@@ -54,12 +54,15 @@ const formSchema = z
     dob: z.date({
       required_error: "Date of birth is required.",
     }),
+    dateofjoining: z.date({
+      required_error: "Date of joining is required.",
+    }),
     age: z.number().min(0).max(120),
     contactNumber: z.string().min(10, {
       message: "Contact number must be at least 10 digits.",
     }),
-    occupation: z.string({
-      required_error: "Please select an Occupation.",
+    por: z.string({
+      required_error: "Please select an por.",
     }),
     educationalQualifications: z.string({
       required_error: "Please select an Educational Qualification.",
@@ -79,49 +82,21 @@ const formSchema = z
     path: ["confirmPassword"],
   });
 
-const occupations = [
-  { label: "Farmer", value: "farmer" },
-  { label: "Agricultural Laborer", value: "agricultural_laborer" },
-  { label: "Fisherman", value: "fisherman" },
-  { label: "Livestock Raiser", value: "livestock_raiser" },
-  { label: "Dairy Farmer", value: "dairy_farmer" },
-  { label: "Poultry Farmer", value: "poultry_farmer" },
-  { label: "Beekeeper", value: "beekeeper" },
-  { label: "Weaver", value: "weaver" },
-  { label: "Handloom Worker", value: "handloom_worker" },
-  { label: "Carpenter", value: "carpenter" },
-  { label: "Blacksmith", value: "blacksmith" },
-  { label: "Potter", value: "potter" },
-  { label: "Handicraft Artisan", value: "handicraft_artisan" },
-  { label: "Mason", value: "mason" },
-  { label: "Electrician", value: "electrician" },
-  { label: "Plumber", value: "plumber" },
-  { label: "Tailor", value: "tailor" },
-  { label: "Barber", value: "barber" },
-  { label: "Washerman (Dhobi)", value: "washerman" },
-  { label: "Cobbler", value: "cobbler" },
-  { label: "Rickshaw Puller", value: "rickshaw_puller" },
-  { label: "Auto Driver", value: "auto_driver" },
-  { label: "Small Shop Owner", value: "small_shop_owner" },
-  { label: "Vegetable Vendor", value: "vegetable_vendor" },
-  { label: "Street Food Vendor", value: "street_food_vendor" },
-  { label: "Self-Employed (Village Business)", value: "self_employed_village" },
-  { label: "Daily Wage Worker", value: "daily_wage_worker" },
-  { label: "Construction Worker", value: "construction_worker" },
-  { label: "Government Employee", value: "government_employee" },
-  { label: "Panchayat Staff", value: "panchayat_staff" },
-  { label: "ASHA Worker", value: "asha_worker" },
-  { label: "Anganwadi Worker", value: "anganwadi_worker" },
-  { label: "Teacher", value: "teacher" },
-  { label: "Rural Health Worker", value: "rural_health_worker" },
-  { label: "Primary School Teacher", value: "primary_school_teacher" },
-  { label: "Folk Performer", value: "folk_performer" },
-  { label: "Traditional Healer", value: "traditional_healer" },
-  { label: "Temple Priest", value: "temple_priest" },
-  { label: "Social Worker", value: "social_worker" },
-  { label: "NGO Worker", value: "ngo_worker" },
-  { label: "Homemaker", value: "homemaker" },
-  { label: "Unemployed", value: "unemployed" },
+const PORs = [
+  { label: "Gram Pradhan (Sarpanch)", value: "gram_pradhan" },
+  { label: "Up-Pradhan (Deputy Pradhan)", value: "up_pradhan" },
+  { label: "Panchayat Secretary", value: "panchayat_secretary" },
+  { label: "Panchayat Development Officer", value: "panchayat_development_officer" },
+  { label: "Ward Member (Panch)", value: "ward_member" },
+  { label: "Panchayat Executive Assistant", value: "panchayat_executive_assistant" },
+  { label: "Block Development Officer (BDO)", value: "block_development_officer" },
+  { label: "Village Revenue Officer", value: "village_revenue_officer" },
+  { label: "Panchayat Clerk", value: "panchayat_clerk" },
+  { label: "Village Accountant", value: "village_accountant" },
+  { label: "Rural Development Officer", value: "rural_development_officer" },
+  { label: "Social Welfare Officer", value: "social_welfare_officer" },
+  { label: "Agriculture Officer", value: "agriculture_officer" },
+  { label: "Accountant", value: "accountant" },
   { label: "Other", value: "other" },
 ];
 
@@ -159,15 +134,15 @@ export default function SignUpForm() {
       age: 0,
       educationalQualifications: "",
       aadhar: "",
-      occupation: "",
+      por: "",
       password: "",
       confirmPassword: "",
     },
   });
   const router = useRouter();
 
-  // Calculate age when date of birth changes
   const dob = form.watch("dob");
+
   useEffect(() => {
     if (dob) {
       const today = new Date();
@@ -186,29 +161,29 @@ export default function SignUpForm() {
   }, [dob, form]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    // console.log(values);
-    try {
-      const response = await fetch("/api/auth/signup/citizen", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(values),
-      });
-      //const data=await response.json();
-      if (response.ok) {
-        alert("Registration Successful");
-        router.push("/api/auth/signin");
-      } else {
-        if (response.status == 400) {
-          alert("User with this email id already exists");
-        } else {
-          alert("Registration Failed");
-        }
-      }
-    } catch (err) {
-      console.error("Registration Error:", err);
-    }
+    console.log(values);
+    // try {
+    //   const response = await fetch("/api/auth/signup/employee", {
+    //     method: "POST",
+    //     headers: {
+    //       "Content-Type": "application/json",
+    //     },
+    //     body: JSON.stringify(values),
+    //   });
+    //   //const data=await response.json();
+    //   if (response.ok) {
+    //     alert("Registration Successful");
+    //     router.push("/api/auth/signin");
+    //   } else {
+    //     if (response.status == 400) {
+    //       alert("User with this email id already exists");
+    //     } else {
+    //       alert("Registration Failed");
+    //     }
+    //   }
+    // } catch (err) {
+    //   console.error("Registration Error:", err);
+    // }
   }
 
   return (
@@ -216,7 +191,7 @@ export default function SignUpForm() {
       <Card className="max-w-2xl mx-auto my-8">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-blue-900">
-            Citizen Portal Registration
+            Panchayat Employee Portal Registration
           </CardTitle>
           <CardDescription>
             Enter your personal details to create an account
@@ -359,36 +334,82 @@ export default function SignUpForm() {
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="occupation"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Occupation</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select your occupation" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {occupations.map((occupation) => (
-                          <SelectItem
-                            key={occupation.value}
-                            value={occupation.value}
-                          >
-                            {occupation.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                  control={form.control}
+                  name="dateofjoining"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Date of Joining</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant={"outline"}
+                              className={cn(
+                                "w-full pl-3 text-left font-normal",
+                                !field.value && "text-muted-foreground"
+                              )}
+                            >
+                              {field.value ? (
+                                format(field.value, "PPP")
+                              ) : (
+                                <span>Pick a date</span>
+                              )}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            disabled={(date) =>
+                              date > new Date() || date < new Date("1900-01-01")
+                            }
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                  <FormField
+                  control={form.control}
+                  name="por"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Position of Responsibility</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select your por" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {PORs.map((por) => (
+                            <SelectItem
+                              key={por.value}
+                              value={por.value}
+                            >
+                              {por.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
               <FormField
                 control={form.control}
