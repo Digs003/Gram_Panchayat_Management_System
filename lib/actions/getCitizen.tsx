@@ -8,12 +8,7 @@ const pool = new Pool({
 
 export async function getCitizen() {
   const result = await pool.query("SELECT * FROM citizen");
-  if (result.rows.length > 0) {
-    return {
-      user: JSON.parse(JSON.stringify(result.rows)),
-    };
-  }
   return {
-    user: null,
+    user: JSON.parse(JSON.stringify(result.rows)) || [],
   };
 }

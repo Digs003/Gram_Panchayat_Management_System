@@ -5,9 +5,11 @@ import { LogOut } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { signOut } from "next-auth/react";
 import { getUser } from "@/lib/actions/getUser";
+import { getEmployee } from "@/lib/actions/getEmployee";
 import { useRouter } from "next/navigation";
 import { getCitizen } from "@/lib/actions/getCitizen";
 import { z } from "zod";
+import EmployeeTable from "@/components/employee_info";
 
 const handleSignOut = async () => {
   await signOut({ callbackUrl: "/api/auth/signin" });
@@ -41,6 +43,28 @@ const citizenSchema = z.object({
 });
 
 type citizentype = z.infer<typeof citizenSchema>;
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const employeeSchema = z.object({
+  name: z.string().min(2, { message: "Name must be at least 2 characters." }),
+  aadhar_id: z
+    .string()
+    .length(12, { message: "Aadhaar must be exactly 12 digits." }),
+  contact_number: z
+    .string()
+    .min(10, { message: "Phone number must be at least 10 digits." }),
+  position: z.string({ required_error: "Position is required." }),
+  dob: z.date({ required_error: "Date of birth is required." }),
+  date_of_joining: z.date({ required_error: "Date of joining is required." }),
+  salary: z
+    .number({ required_error: "Salary is required" })
+    .min(0, { message: "Salary cannot be negative" }),
+  educational_qualification: z.string({
+    required_error: "Qualification is required.",
+  }),
+});
+
+type employeeType = z.infer<typeof employeeSchema>;
 
 const Sidebar = ({
   activeItem,
@@ -133,6 +157,7 @@ const Header = ({ setIsOpen }: { setIsOpen: (isOpen: boolean) => void }) => {
 // Main content component
 const Content = ({ activeItem }: { activeItem: string }) => {
   const [citizens, setCitizens] = useState<citizentype[]>([]);
+  const [employees, setEmployees] = useState<employeeType[]>([]);
   useEffect(() => {
     const fetchCitizens = async () => {
       try {
@@ -143,15 +168,23 @@ const Content = ({ activeItem }: { activeItem: string }) => {
         console.error("Error fetching citizens", e);
       }
     };
+    const fetchEmployees = async () => {
+      try {
+        const data = await getEmployee();
+        console.log(data.user);
+        setEmployees(data.user);
+      } catch (e) {
+        console.error("Error fetching employees", e);
+      }
+    };
+    fetchEmployees();
     fetchCitizens();
   }, []);
   switch (activeItem) {
     case "Citizen":
-      console.log("hi");
-      console.log("citizen: ", citizens);
       return <CitizenTable citizenList={citizens} />;
     case "Panchayat Employee":
-      return <CitizenTable citizenList={citizens} />;
+      return <EmployeeTable employeeList={employees} />;
     case "Government Monitors":
       return <CitizenTable citizenList={citizens} />;
     case "Personal Info":

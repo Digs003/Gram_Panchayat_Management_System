@@ -42,6 +42,7 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
+import { getUser } from "@/lib/actions/getUser";
 
 const formSchema = z
   .object({
@@ -160,7 +161,12 @@ export default function SignUpForm() {
       //const data=await response.json();
       if (response.ok) {
         alert("Registration Successful");
-        router.push("/api/auth/signin");
+        const { user } = await getUser();
+        if (user.occupation === "System Administrator") {
+          router.push("/admin/dashboard");
+        } else {
+          router.push("/api/auth/signin");
+        }
       } else {
         if (response.status == 400) {
           alert("User with this email id already exists");
