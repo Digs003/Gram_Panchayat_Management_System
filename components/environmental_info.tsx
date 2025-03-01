@@ -125,8 +125,10 @@ type EnvironmentalDataType = z.infer<typeof environmentalSchema> & {
 
 export default function EnvironmentalDataTable({
   environmentalList,
+  addOption,
 }: {
   environmentalList: EnvironmentalDataType[];
+  addOption: boolean;
 }) {
   const [environmentalData, setEnvironmentalData] =
     useState<EnvironmentalDataType[]>(environmentalList);
@@ -162,7 +164,7 @@ export default function EnvironmentalDataTable({
   }, [searchTerm, environmentalData]);
 
   const onSubmit = async (data) => {
-    console.log("Form data:", data);
+    //console.log("Form data:", data);
     try {
       const { user } = await getUser();
 
@@ -304,12 +306,14 @@ export default function EnvironmentalDataTable({
           <CardTitle className="text-2xl font-semibold text-slate-800">
             Environmental Data Registry
           </CardTitle>
-          <Button
-            onClick={() => setIsDialogOpen(true)}
-            className="bg-green-600 hover:bg-green-700"
-          >
-            <Plus className="mr-2 h-4 w-4" /> Add Environmental Data
-          </Button>
+          {addOption && (
+            <Button
+              onClick={() => setIsDialogOpen(true)}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              <Plus className="mr-2 h-4 w-4" /> Add Environmental Data
+            </Button>
+          )}
         </CardHeader>
         <CardContent>
           {/* Search Bar */}

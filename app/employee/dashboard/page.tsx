@@ -10,6 +10,8 @@ import EnvironmentalDataTable from "@/components/environmental_info";
 import CensusDataTable from "@/components/census_info";
 import AssetManagementTable from "@/components/asset_management";
 import { getEnvironmentData } from "@/lib/actions/getEnvironmentData";
+import { getCensusData } from "@/lib/actions/getCensusData";
+import { getAssetData } from "@/lib/actions/getAssetData";
 
 const handleSignOut = async () => {
   await signOut({ callbackUrl: "/api/auth/signin" });
@@ -54,6 +56,63 @@ type EnvironmentalDataType = z.infer<typeof environmentalSchema> & {
   data_id: number;
 };
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const censusSchema = z.object({
+  year: z
+    .number({ required_error: "Year is required" })
+    .int({ message: "Year must be an integer" })
+    .min(1900, { message: "Year must be 1900 or later" })
+    .max(new Date().getFullYear(), { message: "Year cannot be in the future" }),
+  total_population: z
+    .number({ required_error: "Total population is required" })
+    .int({ message: "Population must be an integer" })
+    .min(0, { message: "Population cannot be negative" }),
+  male_population: z
+    .number({ required_error: "Male population is required" })
+    .int({ message: "Population must be an integer" })
+    .min(0, { message: "Population cannot be negative" }),
+  female_population: z
+    .number({ required_error: "Female population is required" })
+    .int({ message: "Population must be an integer" })
+    .min(0, { message: "Population cannot be negative" }),
+  literacy_rate: z
+    .number({ required_error: "Literacy rate is required" })
+    .min(0, { message: "Rate cannot be negative" })
+    .max(100, { message: "Rate cannot exceed 100%" }),
+  birth_rate: z
+    .number({ required_error: "Birth rate is required" })
+    .min(0, { message: "Rate cannot be negative" }),
+  death_rate: z
+    .number({ required_error: "Death rate is required" })
+    .min(0, { message: "Rate cannot be negative" }),
+});
+
+type CensusDataType = z.infer<typeof censusSchema> & {
+  census_id: number;
+};
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const assetSchema = z.object({
+  asset_name: z.string().min(1, { message: "Asset name is required" }).max(100),
+  quantity: z
+    .number()
+    .int()
+    .min(0, { message: "Quantity must be 0 or greater" }),
+  locality: z.string().min(1, { message: "Locality is required" }).max(100),
+  installation_year: z
+    .number()
+    .int()
+    .min(1900, { message: "Year must be 1900 or later" })
+    .max(new Date().getFullYear()),
+  amount_spent: z
+    .number()
+    .min(0, { message: "Amount spent must be 0 or greater" }),
+});
+
+type AssetType = z.infer<typeof assetSchema> & {
+  asset_id: number;
+};
+
 const Sidebar = ({
   activeItem,
   setActiveItem,
@@ -82,7 +141,7 @@ const Sidebar = ({
         } transition-transform duration-300 ease-in-out md:translate-x-0 h-full`}
       >
         <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-          <h1 className="text-xl font-bold">Admin Options</h1>
+          <h1 className="text-xl font-bold">Employee Options</h1>
           <button
             className="md:hidden text-gray-600"
             onClick={() => setIsOpen(false)}
@@ -147,6 +206,8 @@ const Content = ({ activeItem }: { activeItem: string }) => {
   const [environmentalList, setEnvironmentalList] = useState<
     EnvironmentalDataType[]
   >([]);
+  const [censusList, setCensusList] = useState<CensusDataType[]>([]);
+  const [assetList, setAssetList] = useState<AssetType[]>([]);
   useEffect(() => {
     const fetchEnvironmentaldata = async () => {
       try {
@@ -156,20 +217,53 @@ const Content = ({ activeItem }: { activeItem: string }) => {
         console.error("Error fetching citizens", e);
       }
     };
+    const fetchCensusData = async () => {
+      try {
+        const data = await getCensusData();
+        setCensusList(data.user);
+      } catch (e) {
+        console.error("Error fetching citizens", e);
+      }
+    };
+    const fetchAssetData = async () => {
+      try {
+        const data = await getAssetData();
+        setAssetList(data.user);
+      } catch (e) {
+        console.error("Error fetching citizens", e);
+      }
+    };
+    fetchAssetData();
+    fetchCensusData();
     fetchEnvironmentaldata();
   }, []);
   switch (activeItem) {
     case "Environmental Data":
       console.log(environmentalList);
-      return <EnvironmentalDataTable environmentalList={environmentalList} />;
+      return (
+        <EnvironmentalDataTable
+          environmentalList={environmentalList}
+          addOption={true}
+        />
+      );
     case "Census Data":
-      return <CensusDataTable />;
+      return <CensusDataTable censusList={censusList} addOption={true} />;
     case "Asset Management":
-      return <AssetManagementTable />;
+      return <AssetManagementTable assetList={assetList} addOption={true} />;
     case "Personal Info":
-      return <EnvironmentalDataTable environmentalList={environmentalList} />;
+      return (
+        <EnvironmentalDataTable
+          environmentalList={environmentalList}
+          addOption={true}
+        />
+      );
     default:
-      return <EnvironmentalDataTable environmentalList={environmentalList} />;
+      return (
+        <EnvironmentalDataTable
+          environmentalList={environmentalList}
+          addOption={true}
+        />
+      );
   }
 };
 

@@ -162,7 +162,9 @@ export default function SignUpForm() {
       if (response.ok) {
         alert("Registration Successful");
         const { user } = await getUser();
-        if (user.occupation === "System Administrator") {
+        if (!user) {
+          router.push("/api/auth/signin");
+        } else if (user.occupation === "System Administrator") {
           router.push("/admin/dashboard");
         } else {
           router.push("/api/auth/signin");

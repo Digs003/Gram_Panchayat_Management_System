@@ -49,6 +49,7 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { getUser } from "@/lib/actions/getUser";
 
 const censusSchema = z.object({
   year: z
@@ -84,65 +85,16 @@ type CensusDataType = z.infer<typeof censusSchema> & {
   census_id: number;
 };
 
-// Mock census data
-const mockCensusData: CensusDataType[] = [
-  {
-    census_id: 1,
-    year: 2015,
-    total_population: 5420,
-    male_population: 2760,
-    female_population: 2660,
-    literacy_rate: 68.75,
-    birth_rate: 21.45,
-    death_rate: 7.82,
-  },
-  {
-    census_id: 2,
-    year: 2017,
-    total_population: 5680,
-    male_population: 2870,
-    female_population: 2810,
-    literacy_rate: 72.3,
-    birth_rate: 20.18,
-    death_rate: 7.65,
-  },
-  {
-    census_id: 3,
-    year: 2019,
-    total_population: 5920,
-    male_population: 2990,
-    female_population: 2930,
-    literacy_rate: 75.6,
-    birth_rate: 19.45,
-    death_rate: 7.4,
-  },
-  {
-    census_id: 4,
-    year: 2021,
-    total_population: 6140,
-    male_population: 3080,
-    female_population: 3060,
-    literacy_rate: 78.2,
-    birth_rate: 18.75,
-    death_rate: 7.2,
-  },
-  {
-    census_id: 5,
-    year: 2023,
-    total_population: 6320,
-    male_population: 3150,
-    female_population: 3170,
-    literacy_rate: 81.5,
-    birth_rate: 18.1,
-    death_rate: 7.05,
-  },
-];
-
-export default function CensusDataTable() {
-  const [censusData, setCensusData] =
-    useState<CensusDataType[]>(mockCensusData);
+export default function CensusDataTable({
+  censusList,
+  addOption,
+}: {
+  censusList: CensusDataType[];
+  addOption: boolean;
+}) {
+  const [censusData, setCensusData] = useState<CensusDataType[]>(censusList);
   const [filteredData, setFilteredData] =
-    useState<CensusDataType[]>(mockCensusData);
+    useState<CensusDataType[]>(censusList);
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedCensusData, setSelectedCensusData] =
@@ -163,6 +115,11 @@ export default function CensusDataTable() {
   });
 
   useEffect(() => {
+    setCensusData(censusList);
+    setFilteredData(censusList);
+  }, [censusList]);
+
+  useEffect(() => {
     const results = censusData.filter((data) =>
       data.year.toString().includes(searchTerm)
     );
@@ -170,16 +127,40 @@ export default function CensusDataTable() {
   }, [searchTerm, censusData]);
 
   const onSubmit = async (data) => {
-    console.log("Form data:", data);
+    //console.log("Form data:", data);
+    try {
+      const { user } = await getUser();
+      const response = await fetch("/api/employees/addcensus", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          year: data.year,
+          total_population: data.total_population,
+          male_population: data.male_population,
+          female_population: data.female_population,
+          literacy_rate: data.literacy_rate,
+          birth_rate: data.birth_rate,
+          death_rate: data.death_rate,
+          aadhar_id: user.aadhar_id,
+        }),
+      });
 
-    // Add the new census entry with a generated ID
-    const newCensusEntry = {
-      ...data,
-      census_id: Math.max(...censusData.map((d) => d.census_id)) + 1,
-    };
-
-    setCensusData([...censusData, newCensusEntry]);
-    setFilteredData([...censusData, newCensusEntry]);
+      if (!response.ok) {
+        alert("Failed to add census data");
+      } else {
+        alert("Census data added successfully");
+        const newCensusEntry = {
+          ...data,
+          census_id: Math.max(...censusData.map((d) => d.census_id)) + 1,
+        };
+        setCensusData([...censusData, newCensusEntry]);
+        setFilteredData([...censusData, newCensusEntry]);
+      }
+    } catch (error) {
+      console.error("Failed to add census data", error);
+    }
     setIsDialogOpen(false);
     form.reset();
   };
@@ -218,7 +199,7 @@ export default function CensusDataTable() {
             />
           </div>
           <span className="text-xs font-medium text-slate-600 whitespace-nowrap">
-            {malePercentage.toFixed(1)}% Male
+            {malePercentage.toFixed(2)}% Male
           </span>
         </div>
         <div className="flex items-center gap-2">
@@ -229,7 +210,7 @@ export default function CensusDataTable() {
             />
           </div>
           <span className="text-xs font-medium text-slate-600 whitespace-nowrap">
-            {femalePercentage.toFixed(1)}% Female
+            {femalePercentage.toFixed(2)}% Female
           </span>
         </div>
       </div>
@@ -250,7 +231,7 @@ export default function CensusDataTable() {
                 : "text-amber-600"
             }`}
           >
-            {selectedCensusData.literacy_rate.toFixed(1)}%
+            {selectedCensusData.literacy_rate}%
           </span>
         </div>
         <div className="w-full bg-slate-100 rounded-full h-4 overflow-hidden">
@@ -280,7 +261,7 @@ export default function CensusDataTable() {
               </span>
             </div>
             <p className="text-lg font-semibold text-blue-600">
-              {selectedCensusData.birth_rate.toFixed(2)}
+              {selectedCensusData.birth_rate}
             </p>
           </div>
           <div className="bg-red-50 p-3 rounded-lg">
@@ -291,7 +272,7 @@ export default function CensusDataTable() {
               </span>
             </div>
             <p className="text-lg font-semibold text-red-600">
-              {selectedCensusData.death_rate.toFixed(2)}
+              {selectedCensusData.death_rate}
             </p>
           </div>
           <div className="bg-green-50 p-3 rounded-lg">
@@ -302,7 +283,7 @@ export default function CensusDataTable() {
               </span>
             </div>
             <p className="text-lg font-semibold text-green-600">
-              {naturalGrowthRate.toFixed(2)}
+              {naturalGrowthRate}
             </p>
           </div>
         </div>
@@ -317,12 +298,14 @@ export default function CensusDataTable() {
           <CardTitle className="text-2xl font-semibold text-slate-800">
             Panchayat Census Data Registry
           </CardTitle>
-          <Button
-            onClick={() => setIsDialogOpen(true)}
-            className="bg-indigo-600 hover:bg-indigo-700"
-          >
-            <Plus className="mr-2 h-4 w-4" /> Add Census Data
-          </Button>
+          {addOption && (
+            <Button
+              onClick={() => setIsDialogOpen(true)}
+              className="bg-indigo-600 hover:bg-indigo-700"
+            >
+              <Plus className="mr-2 h-4 w-4" /> Add Census Data
+            </Button>
+          )}
         </CardHeader>
         <CardContent>
           <div className="mb-6 relative">
@@ -440,14 +423,14 @@ export default function CensusDataTable() {
                                 : "text-slate-600"
                             }
                           >
-                            {data.literacy_rate.toFixed(2)}%
+                            {data.literacy_rate}%
                           </span>
                         </TableCell>
                         <TableCell className="text-slate-600">
-                          {data.birth_rate.toFixed(2)}
+                          {data.birth_rate}
                         </TableCell>
                         <TableCell className="text-slate-600">
-                          {data.death_rate.toFixed(2)}
+                          {data.death_rate}
                         </TableCell>
                         <TableCell>
                           <Button
@@ -757,7 +740,7 @@ export default function CensusDataTable() {
                                     : "text-slate-800"
                                 }`}
                               >
-                                {selectedCensusData.literacy_rate.toFixed(1)}%
+                                {selectedCensusData.literacy_rate}%
                               </span>
                             </div>
                           </div>

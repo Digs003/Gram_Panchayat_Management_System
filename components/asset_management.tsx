@@ -33,6 +33,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { getUser } from "@/lib/actions/getUser";
 
 const assetSchema = z.object({
   asset_name: z.string().min(1, { message: "Asset name is required" }).max(100),
@@ -55,53 +56,15 @@ type AssetType = z.infer<typeof assetSchema> & {
   asset_id: number;
 };
 
-// Mock asset data
-const mockAssetData: AssetType[] = [
-  {
-    asset_id: 1,
-    asset_name: "Street Light",
-    quantity: 50,
-    locality: "Main Road",
-    installation_year: 2020,
-    amount_spent: 25000.0,
-  },
-  {
-    asset_id: 2,
-    asset_name: "Park Bench",
-    quantity: 20,
-    locality: "Central Park",
-    installation_year: 2021,
-    amount_spent: 10000.0,
-  },
-  {
-    asset_id: 3,
-    asset_name: "Traffic Signal",
-    quantity: 10,
-    locality: "City Center",
-    installation_year: 2019,
-    amount_spent: 50000.0,
-  },
-  {
-    asset_id: 4,
-    asset_name: "Public Toilet",
-    quantity: 5,
-    locality: "Market Area",
-    installation_year: 2022,
-    amount_spent: 75000.0,
-  },
-  {
-    asset_id: 5,
-    asset_name: "Garbage Bin",
-    quantity: 100,
-    locality: "Residential Area",
-    installation_year: 2023,
-    amount_spent: 15000.0,
-  },
-];
-
-export default function AssetManagementTable() {
-  const [assetData, setAssetData] = useState<AssetType[]>(mockAssetData);
-  const [filteredData, setFilteredData] = useState<AssetType[]>(mockAssetData);
+export default function AssetManagementTable({
+  assetList,
+  addOption,
+}: {
+  assetList: AssetType[];
+  addOption: boolean;
+}) {
+  const [assetData, setAssetData] = useState<AssetType[]>(assetList);
+  const [filteredData, setFilteredData] = useState<AssetType[]>(assetList);
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedAsset, setSelectedAsset] = useState<AssetType | null>(null);
@@ -118,6 +81,11 @@ export default function AssetManagementTable() {
     },
   });
 
+  useEffect(() => {
+    setAssetData(assetList);
+    setFilteredData(assetList);
+  }, [assetList]);
+
   // Filter asset data when search term changes
   useEffect(() => {
     const results = assetData.filter(
@@ -129,16 +97,40 @@ export default function AssetManagementTable() {
   }, [searchTerm, assetData]);
 
   const onSubmit = async (data: z.infer<typeof assetSchema>) => {
-    console.log("Form data:", data);
+    try {
+      const { user } = await getUser();
+      const response = await fetch("/api/employees/addasset", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          asset_name: data.asset_name,
+          quantity: data.quantity,
+          locality: data.locality,
+          installation_year: data.installation_year,
+          amount_spent: data.amount_spent,
+          aadhar_id: user.aadhar_id,
+        }),
+      });
+
+      if (!response.ok) {
+        alert("Failed to add asset");
+      } else {
+        alert("Asset added successfully");
+        const newAsset = {
+          ...data,
+          asset_id: Math.max(...assetData.map((a) => a.asset_id)) + 1,
+        };
+        setAssetData([...assetData, newAsset]);
+        setFilteredData([...assetData, newAsset]);
+      }
+    } catch (error) {
+      console.error("Failed to add census data", error);
+    }
 
     // Add the new asset entry with a generated ID
-    const newAsset = {
-      ...data,
-      asset_id: Math.max(...assetData.map((a) => a.asset_id)) + 1,
-    };
 
-    setAssetData([...assetData, newAsset]);
-    setFilteredData([...assetData, newAsset]);
     setIsDialogOpen(false);
     form.reset();
   };
@@ -193,7 +185,7 @@ export default function AssetManagementTable() {
           <div className="border-t border-gray-200 my-4"></div>
           <div className="flex justify-between text-lg font-semibold">
             <span>Total Amount:</span>
-            <span>₹{selectedAsset.amount_spent.toFixed(2)}</span>
+            <span>₹{selectedAsset.amount_spent}</span>
           </div>
         </CardContent>
       </Card>
@@ -207,12 +199,14 @@ export default function AssetManagementTable() {
           <CardTitle className="text-2xl font-semibold text-slate-800">
             Asset Management
           </CardTitle>
-          <Button
-            onClick={() => setIsDialogOpen(true)}
-            className="bg-blue-600 hover:bg-blue-700"
-          >
-            <Plus className="mr-2 h-4 w-4" /> Add Asset
-          </Button>
+          {addOption && (
+            <Button
+              onClick={() => setIsDialogOpen(true)}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              <Plus className="mr-2 h-4 w-4" /> Add Asset
+            </Button>
+          )}
         </CardHeader>
         <CardContent>
           {/* Search Bar */}
@@ -291,7 +285,7 @@ export default function AssetManagementTable() {
                         {asset.installation_year}
                       </TableCell>
                       <TableCell className="text-slate-600">
-                        {asset.amount_spent.toFixed(2)}
+                        {asset.amount_spent}
                       </TableCell>
                       <TableCell>
                         <Button
