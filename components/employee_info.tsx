@@ -189,17 +189,19 @@ export default function EmployeeTable({
         });
         if (!response.ok) {
           alert("Failed to update employee. Please try again.");
+        } else {
+          alert("Employee updated successfully");
+          setEmployees(
+            employees.map((employee) =>
+              employee.aadhar_id === editingEmployee.aadhar_id
+                ? { ...employee, ...data }
+                : employee
+            )
+          );
         }
       } catch (e) {
         console.error("Error updating employee:", e);
       }
-      setEmployees(
-        employees.map((employee) =>
-          employee.aadhar_id === editingEmployee.aadhar_id
-            ? { ...employee, ...data }
-            : employee
-        )
-      );
     } else {
       setEmployees([...employees, { ...data }]);
     }

@@ -12,6 +12,8 @@ import { z } from "zod";
 import EmployeeTable from "@/components/employee_info";
 import MonitorTable from "@/components/monitor_info";
 import { getMonitor } from "@/lib/actions/getMonitor";
+import PersonalProfile from "@/components/personal_info";
+import { getPersonalAdmin } from "@/lib/actions/getPersonalAdmin";
 
 const handleSignOut = async () => {
   await signOut({ callbackUrl: "/api/auth/signin" });
@@ -91,6 +93,24 @@ const monitorSchema = z.object({
 });
 
 type monitorType = z.infer<typeof monitorSchema>;
+
+type personalInfoType = {
+  admin_id: number | null;
+  member_id: number | null;
+  monitor_id: number | null;
+  citizen_id: number;
+  date_of_joining: string;
+  email: string | null;
+  name: string;
+  gender: string;
+  dob: string;
+  contact_number: string;
+  occupation: string;
+  age: number;
+  educational_qualification: string;
+  aadhar_id: string;
+  position: string | null;
+};
 
 const Sidebar = ({
   activeItem,
@@ -185,6 +205,7 @@ const Content = ({ activeItem }: { activeItem: string }) => {
   const [citizens, setCitizens] = useState<citizentype[]>([]);
   const [employees, setEmployees] = useState<employeeType[]>([]);
   const [monitors, setMonitors] = useState<monitorType[]>([]);
+  const [personalInfo, setPersonalInfo] = useState<personalInfoType>();
   useEffect(() => {
     const fetchCitizens = async () => {
       try {
@@ -213,6 +234,15 @@ const Content = ({ activeItem }: { activeItem: string }) => {
         console.error("Error fetching monitors", e);
       }
     };
+    const fetchPersonalInfo = async () => {
+      try {
+        const data = await getPersonalAdmin();
+        setPersonalInfo(data.user);
+      } catch (e) {
+        console.error("Error fetching personal info", e);
+      }
+    };
+    fetchPersonalInfo();
     fetchMonitors();
     fetchEmployees();
     fetchCitizens();
@@ -225,7 +255,11 @@ const Content = ({ activeItem }: { activeItem: string }) => {
     case "Government Monitors":
       return <MonitorTable monitorList={monitors} />;
     case "Personal Info":
-      return <CitizenTable citizenList={citizens} addOption={true} />;
+      return personalInfo ? (
+        <PersonalProfile personalInfo={personalInfo} type={"Admin"} />
+      ) : (
+        <div>Loading...</div>
+      );
     default:
       return <CitizenTable citizenList={citizens} addOption={true} />;
   }

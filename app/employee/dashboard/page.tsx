@@ -14,6 +14,12 @@ import { getCensusData } from "@/lib/actions/getCensusData";
 import { getAssetData } from "@/lib/actions/getAssetData";
 import CitizenTable from "@/components/citizen_info";
 import { getCitizen } from "@/lib/actions/getCitizen";
+import PersonalProfile from "@/components/personal_info";
+import { getPersonalEmployee } from "@/lib/actions/getPersonalEmployee";
+import TaxManagementWrapper from "@/components/tax_management";
+import { getAllTax } from "@/lib/actions/getAllTax";
+import LandHoldingsTable from "@/components/agri_info";
+import { getAllAgriData } from "@/lib/actions/getAllAgriData";
 
 const handleSignOut = async () => {
   await signOut({ callbackUrl: "/api/auth/signin" });
@@ -28,8 +34,10 @@ const sidebarItems: SidebarItem[] = [
   { id: "Environmental Data", label: "Environmental Data" },
   { id: "Census Data", label: "Census Data" },
   { id: "Asset Management", label: "Asset Management" },
-  { id: "Personal Info", label: "Personal Info" },
   { id: "Citizen", label: "Citizen" },
+  { id: "Tax", label: "Tax" },
+  { id: "Agricultural Data", label: "Agricultural Data" },
+  { id: "Personal Info", label: "Personal Info" },
 ];
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -135,6 +143,51 @@ const citizenSchema = z.object({
 
 type citizentype = z.infer<typeof citizenSchema>;
 
+type personalInfoType = {
+  admin_id: number | null;
+  member_id: number | null;
+  monitor_id: number | null;
+  citizen_id: number;
+  date_of_joining: string;
+  email: string | null;
+  name: string;
+  gender: string;
+  dob: string;
+  contact_number: string;
+  occupation: string;
+  age: number;
+  educational_qualification: string;
+  aadhar_id: string;
+  position: string | null;
+};
+
+type TaxType = {
+  tax_id: number;
+  tax_type: string;
+  amount: number;
+  due_date: Date;
+  citizen_name: string;
+  payment_date: Date;
+  name: string;
+};
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const landHoldingSchema = z.object({
+  record_id: z.string().min(1, { message: "Plot number is required" }),
+  land_area: z.coerce
+    .number()
+    .positive({ message: "Land area must be positive" }),
+  crop_type: z.string().min(1, { message: "Crop type is required" }),
+  valuation: z.coerce
+    .number()
+    .positive({ message: "Valuation must be positive" }),
+  yield: z.coerce.number().positive({ message: "Yield must be positive" }),
+  owner_name: z.string().min(1, { message: "Owner name is required" }),
+});
+
+// Define the LandHolding type
+type LandHolding = z.infer<typeof landHoldingSchema>;
+
 const Sidebar = ({
   activeItem,
   setActiveItem,
@@ -231,6 +284,9 @@ const Content = ({ activeItem }: { activeItem: string }) => {
   const [censusList, setCensusList] = useState<CensusDataType[]>([]);
   const [assetList, setAssetList] = useState<AssetType[]>([]);
   const [citizens, setCitizens] = useState<citizentype[]>([]);
+  const [personalInfo, setPersonalInfo] = useState<personalInfoType>();
+  const [taxList, setTaxList] = useState<TaxType[]>([]);
+  const [agriList, setAgriList] = useState<LandHolding[]>([]);
   useEffect(() => {
     const fetchEnvironmentaldata = async () => {
       try {
@@ -264,6 +320,34 @@ const Content = ({ activeItem }: { activeItem: string }) => {
         console.error("Error fetching citizens", e);
       }
     };
+    const fetchPersonalInfo = async () => {
+      try {
+        const data = await getPersonalEmployee();
+        setPersonalInfo(data.user);
+      } catch (e) {
+        console.error("Error fetching personal info", e);
+      }
+    };
+    const fetchTaxData = async () => {
+      try {
+        const data = await getAllTax();
+        setTaxList(data.user);
+      } catch (e) {
+        console.error("Error fetching tax data", e);
+      }
+    };
+    const fetchAgriData = async () => {
+      try {
+        const data = await getAllAgriData();
+        setAgriList(data.user);
+        console.log("Agri data", data.user);
+      } catch (e) {
+        console.error("Error fetching agri data", e);
+      }
+    };
+    fetchAgriData();
+    fetchTaxData();
+    fetchPersonalInfo();
     fetchCitizen();
     fetchAssetData();
     fetchCensusData();
@@ -283,14 +367,17 @@ const Content = ({ activeItem }: { activeItem: string }) => {
     case "Asset Management":
       return <AssetManagementTable assetList={assetList} addOption={true} />;
     case "Personal Info":
-      return (
-        <EnvironmentalDataTable
-          environmentalList={environmentalList}
-          addOption={true}
-        />
+      return personalInfo ? (
+        <PersonalProfile personalInfo={personalInfo} type={"Employee"} />
+      ) : (
+        <div>Loading...</div>
       );
+    case "Tax":
+      return <TaxManagementWrapper citizenList={citizens} taxList={taxList} />;
     case "Citizen":
       return <CitizenTable citizenList={citizens} addOption={false} />;
+    case "Agricultural Data":
+      return <LandHoldingsTable landHoldings={agriList} />;
     default:
       return (
         <EnvironmentalDataTable
@@ -303,7 +390,7 @@ const Content = ({ activeItem }: { activeItem: string }) => {
 
 // Main page component
 export default function Page() {
-  const [activeItem, setActiveItem] = useState();
+  const [activeItem, setActiveItem] = useState<string>("Environmental Data");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [, setIsMobile] = useState(false);
   const router = useRouter();

@@ -87,12 +87,12 @@ export default function MonitorTable({
 }: {
   monitorList: monitorType[];
 }) {
-  const [monitors, setEmployees] = useState(monitorList);
-  const [filteredEmployees, setFilteredEmployees] = useState(monitorList);
+  const [monitors, setMonitors] = useState(monitorList);
+  const [filteredMonitors, setFilteredMonitors] = useState(monitorList);
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const router = useRouter();
-  const [editingEmployee, setEditingEmployee] = useState<monitorType | null>(
+  const [editingMonitor, setEditingMonitor] = useState<monitorType | null>(
     null
   );
 
@@ -111,8 +111,8 @@ export default function MonitorTable({
   });
 
   useEffect(() => {
-    setEmployees(monitorList);
-    setFilteredEmployees(monitorList);
+    setMonitors(monitorList);
+    setFilteredMonitors(monitorList);
   }, [monitorList]);
 
   // Filter monitors when search term changes
@@ -123,7 +123,7 @@ export default function MonitorTable({
         monitor.aadhar_id.includes(searchTerm) ||
         monitor.contact_number.includes(searchTerm)
     );
-    setFilteredEmployees(results);
+    setFilteredMonitors(results);
     console.log(monitorList);
   }, [searchTerm, monitors]);
 
@@ -143,16 +143,62 @@ export default function MonitorTable({
       salary: monitor.salary,
       educational_qualification: monitor.educational_qualification,
     });
-    setEditingEmployee(monitor);
+    setEditingMonitor(monitor);
     setIsDialogOpen(true);
   };
 
   const handleDelete = async (aadhar_id) => {
     console.log("Delete monitor with aadhar_id:", aadhar_id);
+    try {
+      const response = await fetch(`/api/citizens/delete`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          aadhar_id: aadhar_id,
+        }),
+      });
+      if (!response.ok) {
+        alert("Failed to delete monitor. Please try again.");
+      }
+    } catch (e) {
+      console.error("Error deleting employee:", e);
+    }
+    setMonitors(monitors.filter((monitor) => monitor.aadhar_id !== aadhar_id));
   };
 
   const onSubmit = async (data) => {
     console.log("Form data:", data);
+    if (editingMonitor) {
+      try {
+        const response = await fetch(`/api/monitors/update`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: data.name,
+            aadhar_id: data.aadhar_id,
+            contact_number: data.contact_number,
+            salary: data.salary,
+            educational_qualification: data.educational_qualification,
+          }),
+        });
+        if (!response.ok) {
+          alert("Failed to update monitor. Please try again.");
+        } else {
+          alert("Monitor updated successfully");
+          setMonitors(
+            monitors.map((monitor) =>
+              monitor.aadhar_id === editingMonitor.aadhar_id
+                ? { ...monitor, ...data }
+                : monitor
+            )
+          );
+        }
+      } catch (e) {
+        console.error("Error updating monitor:", e);
+      }
+    } else {
+      setMonitors([...monitors, { ...data }]);
+    }
     setIsDialogOpen(false);
     form.reset();
   };
@@ -191,7 +237,7 @@ export default function MonitorTable({
             {searchTerm && (
               <div className="absolute right-3 top-3">
                 <Badge variant="outline" className="bg-slate-100">
-                  {filteredEmployees.length} results
+                  {filteredMonitors.length} results
                 </Badge>
               </div>
             )}
@@ -232,7 +278,7 @@ export default function MonitorTable({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredEmployees.length === 0 ? (
+                {filteredMonitors.length === 0 ? (
                   <TableRow>
                     <TableCell
                       colSpan={9}
@@ -244,7 +290,7 @@ export default function MonitorTable({
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredEmployees.map((monitor) => (
+                  filteredMonitors.map((monitor) => (
                     <TableRow
                       key={monitor.aadhar_id}
                       className="hover:bg-slate-50 transition-colors"
@@ -311,7 +357,7 @@ export default function MonitorTable({
 
           {/* Count summary */}
           <div className="mt-4 text-sm text-slate-500">
-            Showing {filteredEmployees?.length} of {monitors?.length} monitors
+            Showing {filteredMonitors?.length} of {monitors?.length} monitors
           </div>
         </CardContent>
       </Card>
@@ -321,7 +367,7 @@ export default function MonitorTable({
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle className="text-xl font-semibold">
-              {editingEmployee
+              {editingMonitor
                 ? "Edit monitor Information"
                 : "Register New monitor"}
             </DialogTitle>
@@ -455,7 +501,7 @@ export default function MonitorTable({
                   type="submit"
                   className="bg-indigo-600 hover:bg-indigo-700"
                 >
-                  {editingEmployee ? "Save Changes" : "Add monitor"}
+                  {editingMonitor ? "Save Changes" : "Add monitor"}
                 </Button>
               </DialogFooter>
             </form>

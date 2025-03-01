@@ -4,7 +4,6 @@ import { LogOut } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { signOut } from "next-auth/react";
 import { z } from "zod";
-import { useRouter } from "next/navigation";
 import EnvironmentalDataTable from "@/components/environmental_info";
 import CensusDataTable from "@/components/census_info";
 import AssetManagementTable from "@/components/asset_management";
@@ -13,6 +12,7 @@ import { getCensusData } from "@/lib/actions/getCensusData";
 import { getAssetData } from "@/lib/actions/getAssetData";
 import TaxTable from "@/components/tax_citizen";
 import { getTaxData } from "@/lib/actions/getTaxData";
+import PersonalProfile from "@/components/personal_info";
 
 const handleSignOut = async () => {
   await signOut({ callbackUrl: "/api/auth/signin" });
@@ -274,12 +274,7 @@ const Content = ({ activeItem }: { activeItem: string }) => {
     case "Asset Management":
       return <AssetManagementTable assetList={assetList} addOption={false} />;
     case "Personal Info":
-      return (
-        <EnvironmentalDataTable
-          environmentalList={environmentalList}
-          addOption={false}
-        />
-      );
+      return <PersonalProfile />;
     default:
       return <TaxTable taxList={taxList} />;
   }
@@ -289,8 +284,9 @@ const Content = ({ activeItem }: { activeItem: string }) => {
 export default function Page() {
   const [activeItem, setActiveItem] = useState("Citizen");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isMobile, setIsMobile] = useState(false);
-  const router = useRouter();
+  //const router = useRouter();
 
   // Check if we're on a mobile device on initial render and window resize
   useEffect(() => {
