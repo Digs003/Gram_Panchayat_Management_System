@@ -12,6 +12,8 @@ import AssetManagementTable from "@/components/asset_management";
 import { getEnvironmentData } from "@/lib/actions/getEnvironmentData";
 import { getCensusData } from "@/lib/actions/getCensusData";
 import { getAssetData } from "@/lib/actions/getAssetData";
+import CitizenTable from "@/components/citizen_info";
+import { getCitizen } from "@/lib/actions/getCitizen";
 
 const handleSignOut = async () => {
   await signOut({ callbackUrl: "/api/auth/signin" });
@@ -27,6 +29,7 @@ const sidebarItems: SidebarItem[] = [
   { id: "Census Data", label: "Census Data" },
   { id: "Asset Management", label: "Asset Management" },
   { id: "Personal Info", label: "Personal Info" },
+  { id: "Citizen", label: "Citizen" },
 ];
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -112,6 +115,25 @@ const assetSchema = z.object({
 type AssetType = z.infer<typeof assetSchema> & {
   asset_id: number;
 };
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const citizenSchema = z.object({
+  name: z.string().min(2, { message: "Name must be at least 2 characters." }),
+  age: z.number(),
+  aadhar_id: z
+    .string()
+    .length(12, { message: "Aadhaar must be exactly 12 digits." }),
+  contact_number: z
+    .string()
+    .min(10, { message: "Phone number must be at least 10 digits." }),
+  occupation: z.string({ required_error: "Occupation is required." }),
+  dob: z.date({ required_error: "Date of birth is required." }),
+  educational_qualification: z.string({
+    required_error: "Qualification is required.",
+  }),
+});
+
+type citizentype = z.infer<typeof citizenSchema>;
 
 const Sidebar = ({
   activeItem,
@@ -208,6 +230,7 @@ const Content = ({ activeItem }: { activeItem: string }) => {
   >([]);
   const [censusList, setCensusList] = useState<CensusDataType[]>([]);
   const [assetList, setAssetList] = useState<AssetType[]>([]);
+  const [citizens, setCitizens] = useState<citizentype[]>([]);
   useEffect(() => {
     const fetchEnvironmentaldata = async () => {
       try {
@@ -233,6 +256,15 @@ const Content = ({ activeItem }: { activeItem: string }) => {
         console.error("Error fetching citizens", e);
       }
     };
+    const fetchCitizen = async () => {
+      try {
+        const data = await getCitizen();
+        setCitizens(data.user);
+      } catch (e) {
+        console.error("Error fetching citizens", e);
+      }
+    };
+    fetchCitizen();
     fetchAssetData();
     fetchCensusData();
     fetchEnvironmentaldata();
@@ -257,6 +289,8 @@ const Content = ({ activeItem }: { activeItem: string }) => {
           addOption={true}
         />
       );
+    case "Citizen":
+      return <CitizenTable citizenList={citizens} addOption={false} />;
     default:
       return (
         <EnvironmentalDataTable
@@ -269,9 +303,9 @@ const Content = ({ activeItem }: { activeItem: string }) => {
 
 // Main page component
 export default function Page() {
-  const [activeItem, setActiveItem] = useState("Citizen");
+  const [activeItem, setActiveItem] = useState();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  const [, setIsMobile] = useState(false);
   const router = useRouter();
 
   // Check if we're on a mobile device on initial render and window resize

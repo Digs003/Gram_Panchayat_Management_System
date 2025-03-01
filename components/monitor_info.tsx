@@ -54,13 +54,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { cn } from "@/lib/utils";
+
 import { Badge } from "@/components/ui/badge";
 import { useRouter } from "next/navigation";
 import { educationalQualifications as qualifications } from "@/app/signup/citizen/page";
-import { PORs as positions } from "@/app/signup/employee/page";
 
-const employeeSchema = z.object({
+const monitorSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
   aadhar_id: z
     .string()
@@ -68,7 +67,9 @@ const employeeSchema = z.object({
   contact_number: z
     .string()
     .min(10, { message: "Phone number must be at least 10 digits." }),
-  position: z.string({ required_error: "Position is required." }),
+  email:
+    z.string().email({ message: "Please enter a valid email address." }) ||
+    z.string().nullable(),
   dob: z.date({ required_error: "Date of birth is required." }),
   date_of_joining: z.date({ required_error: "Date of joining is required." }),
   salary: z
@@ -79,24 +80,24 @@ const employeeSchema = z.object({
   }),
 });
 
-type employeeType = z.infer<typeof employeeSchema>;
+type monitorType = z.infer<typeof monitorSchema>;
 
-export default function EmployeeTable({
-  employeeList,
+export default function MonitorTable({
+  monitorList,
 }: {
-  employeeList: employeeType[];
+  monitorList: monitorType[];
 }) {
-  const [employees, setEmployees] = useState(employeeList);
-  const [filteredEmployees, setFilteredEmployees] = useState(employeeList);
+  const [monitors, setEmployees] = useState(monitorList);
+  const [filteredEmployees, setFilteredEmployees] = useState(monitorList);
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const router = useRouter();
-  const [editingEmployee, setEditingEmployee] = useState<employeeType | null>(
+  const [editingEmployee, setEditingEmployee] = useState<monitorType | null>(
     null
   );
 
   const form = useForm({
-    resolver: zodResolver(employeeSchema),
+    resolver: zodResolver(monitorSchema),
     defaultValues: {
       name: "",
       aadhar_id: "",
@@ -105,111 +106,55 @@ export default function EmployeeTable({
       date_of_joining: new Date(),
       salary: 0,
       educational_qualification: "",
-      position: "",
+      email: "",
     },
   });
 
   useEffect(() => {
-    setEmployees(employeeList);
-    setFilteredEmployees(employeeList);
-  }, [employeeList]);
+    setEmployees(monitorList);
+    setFilteredEmployees(monitorList);
+  }, [monitorList]);
 
-  // Filter employees when search term changes
+  // Filter monitors when search term changes
   useEffect(() => {
-    const results = employees.filter(
-      (employee) =>
-        employee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        employee.aadhar_id.includes(searchTerm) ||
-        employee.contact_number.includes(searchTerm) ||
-        getPositionLabel(employee.position)
-          .toLowerCase()
-          .includes(searchTerm.toLowerCase())
+    const results = monitors.filter(
+      (monitor) =>
+        monitor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        monitor.aadhar_id.includes(searchTerm) ||
+        monitor.contact_number.includes(searchTerm)
     );
     setFilteredEmployees(results);
-    console.log(employeeList);
-  }, [searchTerm, employees]);
+    console.log(monitorList);
+  }, [searchTerm, monitors]);
 
   const redirect = () => {
-    router.push("/signup/employee");
+    router.push("/signup/monitor");
   };
 
-  const handleEdit = (employee) => {
-    console.log("Edit employee with aadhar_id:", employee.aadhar_id);
+  const handleEdit = (monitor) => {
+    console.log("Edit monitor with aadhar_id:", monitor.aadhar_id);
     form.reset({
-      name: employee.name,
-      aadhar_id: employee.aadhar_id,
-      contact_number: employee.contact_number,
-      position: employee.position,
-      dob: new Date(employee.dob),
-      date_of_joining: new Date(employee.date_of_joining),
-      salary: employee.salary,
-      educational_qualification: employee.educational_qualification,
+      name: monitor.name,
+      aadhar_id: monitor.aadhar_id,
+      contact_number: monitor.contact_number,
+      email: monitor.email,
+      dob: new Date(monitor.dob),
+      date_of_joining: new Date(monitor.date_of_joining),
+      salary: monitor.salary,
+      educational_qualification: monitor.educational_qualification,
     });
-    setEditingEmployee(employee);
+    setEditingEmployee(monitor);
     setIsDialogOpen(true);
   };
 
   const handleDelete = async (aadhar_id) => {
-    console.log("Delete employee with aadhar_id:", aadhar_id);
-    try {
-      const response = await fetch(`/api/citizens/delete`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          aadhar_id: aadhar_id,
-        }),
-      });
-      if (!response.ok) {
-        alert("Failed to delete employee. Please try again.");
-      }
-    } catch (e) {
-      console.error("Error deleting employee:", e);
-    }
-    setEmployees(
-      employees.filter((employee) => employee.aadhar_id !== aadhar_id)
-    );
+    console.log("Delete monitor with aadhar_id:", aadhar_id);
   };
 
   const onSubmit = async (data) => {
     console.log("Form data:", data);
-
-    if (editingEmployee) {
-      try {
-        const response = await fetch(`/api/employees/update`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            name: data.name,
-            aadhar_id: data.aadhar_id,
-            contact_number: data.contact_number,
-            position: data.position,
-            salary: data.salary,
-            educational_qualification: data.educational_qualification,
-          }),
-        });
-        if (!response.ok) {
-          alert("Failed to update employee. Please try again.");
-        }
-      } catch (e) {
-        console.error("Error updating employee:", e);
-      }
-      setEmployees(
-        employees.map((employee) =>
-          employee.aadhar_id === editingEmployee.aadhar_id
-            ? { ...employee, ...data }
-            : employee
-        )
-      );
-    } else {
-      setEmployees([...employees, { ...data }]);
-    }
     setIsDialogOpen(false);
     form.reset();
-  };
-
-  const getPositionLabel = (value) => {
-    const position = positions.find((p) => p.value === value);
-    return position ? position.label : value;
   };
 
   const getQualificationLabel = (value) => {
@@ -222,13 +167,13 @@ export default function EmployeeTable({
       <Card className="shadow-sm border-0">
         <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
           <CardTitle className="text-2xl font-semibold text-slate-800">
-            Panchayat Employee Registry
+            Panchayat monitor Registry
           </CardTitle>
           <Button
             onClick={redirect}
             className="bg-indigo-600 hover:bg-indigo-700"
           >
-            <Plus className="mr-2 h-4 w-4" /> Add Employee
+            <Plus className="mr-2 h-4 w-4" /> Add monitor
           </Button>
         </CardHeader>
         <CardContent>
@@ -267,7 +212,7 @@ export default function EmployeeTable({
                     Phone
                   </TableHead>
                   <TableHead className="font-semibold text-slate-700 cursor-pointer">
-                    Position
+                    Email
                   </TableHead>
                   <TableHead className="font-semibold text-slate-700 cursor-pointer">
                     Date of Birth
@@ -294,47 +239,47 @@ export default function EmployeeTable({
                       className="text-center py-10 text-slate-500"
                     >
                       {searchTerm
-                        ? "No employees found matching your search"
-                        : "No employees available"}
+                        ? "No monitors found matching your search"
+                        : "No monitors available"}
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredEmployees.map((employee) => (
+                  filteredEmployees.map((monitor) => (
                     <TableRow
-                      key={employee.aadhar_id}
+                      key={monitor.aadhar_id}
                       className="hover:bg-slate-50 transition-colors"
                     >
                       <TableCell className="font-medium text-slate-800">
-                        {employee.name}
+                        {monitor.name}
                       </TableCell>
                       <TableCell className="text-slate-600">
-                        {employee.aadhar_id}
+                        {monitor.aadhar_id}
                       </TableCell>
                       <TableCell className="text-slate-600">
-                        {employee.contact_number}
+                        {monitor.contact_number}
                       </TableCell>
                       <TableCell>
                         <span
                           className={`inline-flex items-center rounded-full px-3 py-1.5 text-xs font-medium bg-blue-100 text-blue-800`}
                         >
-                          {getPositionLabel(employee.position)}
+                          {monitor.email || "N/A"}
                         </span>
                       </TableCell>
                       <TableCell className="text-slate-600">
-                        {format(new Date(employee.dob), "MMM d, yyyy")}
+                        {format(new Date(monitor.dob), "MMM d, yyyy")}
                       </TableCell>
                       <TableCell className="text-slate-600">
                         {format(
-                          new Date(employee.date_of_joining),
+                          new Date(monitor.date_of_joining),
                           "MMM d, yyyy"
                         )}
                       </TableCell>
                       <TableCell className="text-slate-600">
-                        {employee.salary.toLocaleString()}
+                        {monitor.salary.toLocaleString()}
                       </TableCell>
                       <TableCell className="text-slate-600">
                         {getQualificationLabel(
-                          employee.educational_qualification
+                          monitor.educational_qualification
                         )}
                       </TableCell>
                       <TableCell className="text-right">
@@ -342,7 +287,7 @@ export default function EmployeeTable({
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleEdit(employee)}
+                            onClick={() => handleEdit(monitor)}
                             className="h-8 w-8 p-0 text-blue-600 border-blue-200 hover:bg-blue-50"
                           >
                             <Pencil className="h-4 w-4" />
@@ -350,7 +295,7 @@ export default function EmployeeTable({
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleDelete(employee.aadhar_id)}
+                            onClick={() => handleDelete(monitor.aadhar_id)}
                             className="h-8 w-8 p-0 text-red-600 border-red-200 hover:bg-red-50"
                           >
                             <Trash className="h-4 w-4" />
@@ -366,7 +311,7 @@ export default function EmployeeTable({
 
           {/* Count summary */}
           <div className="mt-4 text-sm text-slate-500">
-            Showing {filteredEmployees?.length} of {employees?.length} employees
+            Showing {filteredEmployees?.length} of {monitors?.length} monitors
           </div>
         </CardContent>
       </Card>
@@ -377,8 +322,8 @@ export default function EmployeeTable({
           <DialogHeader>
             <DialogTitle className="text-xl font-semibold">
               {editingEmployee
-                ? "Edit Employee Information"
-                : "Register New Employee"}
+                ? "Edit monitor Information"
+                : "Register New monitor"}
             </DialogTitle>
           </DialogHeader>
           <Form {...form}>
@@ -444,64 +389,25 @@ export default function EmployeeTable({
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="position"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-slate-700">
-                        Position of Responsibility
-                      </FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger className="border-slate-200">
-                            <SelectValue placeholder="Select position" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {positions.map((position) => (
-                            <SelectItem
-                              key={position.value}
-                              value={position.value}
-                            >
-                              {position.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="salary"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-slate-700">
-                        Salary (₹)
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          placeholder="Enter salary"
-                          {...field}
-                          onChange={(e) =>
-                            field.onChange(Number(e.target.value))
-                          }
-                          className="border-slate-200"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+              <FormField
+                control={form.control}
+                name="salary"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-slate-700">Salary (₹)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        placeholder="Enter salary"
+                        {...field}
+                        onChange={(e) => field.onChange(Number(e.target.value))}
+                        className="border-slate-200"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               <FormField
                 control={form.control}
@@ -549,7 +455,7 @@ export default function EmployeeTable({
                   type="submit"
                   className="bg-indigo-600 hover:bg-indigo-700"
                 >
-                  {editingEmployee ? "Save Changes" : "Add Employee"}
+                  {editingEmployee ? "Save Changes" : "Add monitor"}
                 </Button>
               </DialogFooter>
             </form>

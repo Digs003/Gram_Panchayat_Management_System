@@ -83,7 +83,7 @@ const formSchema = z
     path: ["confirmPassword"],
   });
 
-const PORs = [
+export const PORs = [
   { label: "Gram Pradhan (Sarpanch)", value: "gram_pradhan" },
   { label: "Up-Pradhan (Deputy Pradhan)", value: "up_pradhan" },
   { label: "Panchayat Secretary", value: "panchayat_secretary" },

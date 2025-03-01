@@ -126,7 +126,7 @@ const occupations = [
   { label: "Other", value: "other" },
 ];
 
-const educationalQualifications = [
+export const educationalQualifications = [
   { label: "1st Pass", value: "class_1_pass" },
   { label: "2nd Pass", value: "class_2_pass" },
   { label: "3rd Pass", value: "class_3_pass" },

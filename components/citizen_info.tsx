@@ -57,6 +57,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { useRouter } from "next/navigation";
+import { educationalQualifications as qualifications } from "@/app/signup/citizen/page";
 
 const occupations = [
   { label: "Farmer", value: "farmer" },
@@ -104,28 +105,6 @@ const occupations = [
   { label: "Other", value: "other" },
 ];
 
-const qualifications = [
-  { label: "1st Pass", value: "class_1_pass" },
-  { label: "2nd Pass", value: "class_2_pass" },
-  { label: "3rd Pass", value: "class_3_pass" },
-  { label: "4th Pass", value: "class_4_pass" },
-  { label: "5th Pass", value: "class_5_pass" },
-  { label: "6th Pass", value: "class_6_pass" },
-  { label: "7th Pass", value: "class_7_pass" },
-  { label: "8th Pass", value: "class_8_pass" },
-  { label: "9th Pass", value: "class_9_pass" },
-  { label: "10th Pass (Matriculation)", value: "class_10_pass" },
-  { label: "11th Pass", value: "class_11_pass" },
-  { label: "12th Pass (Higher Secondary)", value: "class_12_pass" },
-  { label: "Diploma", value: "diploma" },
-  { label: "Vocational Training", value: "vocational_training" },
-  { label: "Bachelor's Degree", value: "bachelors_degree" },
-  { label: "Master's Degree", value: "masters_degree" },
-  { label: "Doctorate (PhD)", value: "doctorate" },
-  { label: "Professional Certification", value: "professional_certification" },
-  { label: "No Formal Education", value: "no_formal_education" },
-];
-
 const citizenSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
   age: z.number(),
@@ -142,65 +121,14 @@ const citizenSchema = z.object({
   }),
 });
 
-// const initialCitizens = [
-//   {
-//     id: 1,
-//     name: "John Doe",
-//     email: "john@example.com",
-//     phone: "1234567890",
-//     occupation: "farmer",
-//     dob: new Date("1990-01-01"),
-//     age: 35,
-//     educational_qualification: "bachelors_degree"
-//   },
-//   {
-//     id: 2,
-//     name: "Jane Smith",
-//     email: "jane@example.com",
-//     phone: "9876543210",
-//     occupation: "self_employed_village",
-//     dob: new Date("1985-05-12"),
-//     age: 39,
-//     educational_qualification: "masters_degree"
-//   },
-//   {
-//     id: 3,
-//     name: "Michael Johnson",
-//     email: "michael@example.com",
-//     phone: "5551234567",
-//     occupation: "teacher",
-//     dob: new Date("1992-07-22"),
-//     age: 32,
-//     educational_qualification: "masters_degree"
-//   },
-//   {
-//     id: 4,
-//     name: "Sarah Williams",
-//     email: "sarah@example.com",
-//     phone: "7778889999",
-//     occupation: "government_employee",
-//     dob: new Date("1988-03-15"),
-//     age: 37,
-//     educational_qualification: "bachelors_degree"
-//   },
-//   {
-//     id: 5,
-//     name: "Robert Brown",
-//     email: "robert@example.com",
-//     phone: "3334445555",
-//     occupation: "farmer",
-//     dob: new Date("1975-11-08"),
-//     age: 49,
-//     educational_qualification: "class_12_pass"
-//   }
-// ];
-
 type citizentype = z.infer<typeof citizenSchema>;
 
 export default function CitizenTable({
   citizenList,
+  addOption,
 }: {
   citizenList: citizentype[];
+  addOption: boolean;
 }) {
   const [citizens, setCitizens] = useState(citizenList);
   const [filteredCitizens, setFilteredCitizens] = useState(citizenList);
@@ -329,12 +257,14 @@ export default function CitizenTable({
           <CardTitle className="text-2xl font-semibold text-slate-800">
             Citizen Registry
           </CardTitle>
-          <Button
-            onClick={redirect}
-            className="bg-indigo-600 hover:bg-indigo-700"
-          >
-            <Plus className="mr-2 h-4 w-4" /> Add Citizen
-          </Button>
+          {addOption && (
+            <Button
+              onClick={redirect}
+              className="bg-indigo-600 hover:bg-indigo-700"
+            >
+              <Plus className="mr-2 h-4 w-4" /> Add Citizen
+            </Button>
+          )}
         </CardHeader>
         <CardContent>
           {/* Search Bar */}
@@ -383,9 +313,11 @@ export default function CitizenTable({
                   <TableHead className="font-semibold text-slate-700 cursor-pointer">
                     Qualification
                   </TableHead>
-                  <TableHead className="text-right font-semibold text-slate-700">
-                    Actions
-                  </TableHead>
+                  {addOption && (
+                    <TableHead className="text-right font-semibold text-slate-700">
+                      Actions
+                    </TableHead>
+                  )}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -433,26 +365,28 @@ export default function CitizenTable({
                           citizen.educational_qualification
                         )}
                       </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex space-x-2 justify-end">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleEdit(citizen)}
-                            className="h-8 w-8 p-0 text-blue-600 border-blue-200 hover:bg-blue-50"
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleDelete(citizen.aadhar_id)}
-                            className="h-8 w-8 p-0 text-red-600 border-red-200 hover:bg-red-50"
-                          >
-                            <Trash className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
+                      {addOption && (
+                        <TableCell className="text-right">
+                          <div className="flex space-x-2 justify-end">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleEdit(citizen)}
+                              className="h-8 w-8 p-0 text-blue-600 border-blue-200 hover:bg-blue-50"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleDelete(citizen.aadhar_id)}
+                              className="h-8 w-8 p-0 text-red-600 border-red-200 hover:bg-red-50"
+                            >
+                              <Trash className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))
                 )}

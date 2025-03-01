@@ -10,6 +10,8 @@ import { useRouter } from "next/navigation";
 import { getCitizen } from "@/lib/actions/getCitizen";
 import { z } from "zod";
 import EmployeeTable from "@/components/employee_info";
+import MonitorTable from "@/components/monitor_info";
+import { getMonitor } from "@/lib/actions/getMonitor";
 
 const handleSignOut = async () => {
   await signOut({ callbackUrl: "/api/auth/signin" });
@@ -65,6 +67,30 @@ const employeeSchema = z.object({
 });
 
 type employeeType = z.infer<typeof employeeSchema>;
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const monitorSchema = z.object({
+  name: z.string().min(2, { message: "Name must be at least 2 characters." }),
+  aadhar_id: z
+    .string()
+    .length(12, { message: "Aadhaar must be exactly 12 digits." }),
+  contact_number: z
+    .string()
+    .min(10, { message: "Phone number must be at least 10 digits." }),
+  email:
+    z.string().email({ message: "Please enter a valid email address." }) ||
+    z.string().nullable(),
+  dob: z.date({ required_error: "Date of birth is required." }),
+  date_of_joining: z.date({ required_error: "Date of joining is required." }),
+  salary: z
+    .number({ required_error: "Salary is required" })
+    .min(0, { message: "Salary cannot be negative" }),
+  educational_qualification: z.string({
+    required_error: "Qualification is required.",
+  }),
+});
+
+type monitorType = z.infer<typeof monitorSchema>;
 
 const Sidebar = ({
   activeItem,
@@ -158,6 +184,7 @@ const Header = ({ setIsOpen }: { setIsOpen: (isOpen: boolean) => void }) => {
 const Content = ({ activeItem }: { activeItem: string }) => {
   const [citizens, setCitizens] = useState<citizentype[]>([]);
   const [employees, setEmployees] = useState<employeeType[]>([]);
+  const [monitors, setMonitors] = useState<monitorType[]>([]);
   useEffect(() => {
     const fetchCitizens = async () => {
       try {
@@ -177,20 +204,30 @@ const Content = ({ activeItem }: { activeItem: string }) => {
         console.error("Error fetching employees", e);
       }
     };
+    const fetchMonitors = async () => {
+      try {
+        const data = await getMonitor();
+        console.log(data.user);
+        setMonitors(data.user);
+      } catch (e) {
+        console.error("Error fetching monitors", e);
+      }
+    };
+    fetchMonitors();
     fetchEmployees();
     fetchCitizens();
   }, []);
   switch (activeItem) {
     case "Citizen":
-      return <CitizenTable citizenList={citizens} />;
+      return <CitizenTable citizenList={citizens} addOption={true} />;
     case "Panchayat Employee":
       return <EmployeeTable employeeList={employees} />;
     case "Government Monitors":
-      return <CitizenTable citizenList={citizens} />;
+      return <MonitorTable monitorList={monitors} />;
     case "Personal Info":
-      return <CitizenTable citizenList={citizens} />;
+      return <CitizenTable citizenList={citizens} addOption={true} />;
     default:
-      return <CitizenTable citizenList={citizens} />;
+      return <CitizenTable citizenList={citizens} addOption={true} />;
   }
 };
 
@@ -198,7 +235,7 @@ const Content = ({ activeItem }: { activeItem: string }) => {
 export default function Page() {
   const [activeItem, setActiveItem] = useState("Citizen");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  const [, setIsMobile] = useState(false);
   const router = useRouter();
 
   // Check if we're on a mobile device on initial render and window resize
