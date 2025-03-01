@@ -50,6 +50,8 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { getURL } from "next/dist/shared/lib/utils";
+import { getUser } from "@/lib/actions/getUser";
 
 const environmentalSchema = z.object({
   year: z
@@ -77,57 +79,59 @@ type EnvironmentalDataType = z.infer<typeof environmentalSchema> & {
   data_id: number;
 };
 
-// Mock environmental data
-const mockEnvironmentalData: EnvironmentalDataType[] = [
-  {
-    data_id: 1,
-    year: 2019,
-    air_quality_index: 85.4,
-    water_quality_index: 72.3,
-    rainfall: 1250.75,
-    forest_cover: 3450.25,
-  },
-  {
-    data_id: 2,
-    year: 2020,
-    air_quality_index: 78.2,
-    water_quality_index: 75.6,
-    rainfall: 1320.5,
-    forest_cover: 3420.1,
-  },
-  {
-    data_id: 3,
-    year: 2021,
-    air_quality_index: 72.5,
-    water_quality_index: 78.9,
-    rainfall: 1280.25,
-    forest_cover: 3400.75,
-  },
-  {
-    data_id: 4,
-    year: 2022,
-    air_quality_index: 68.3,
-    water_quality_index: 82.4,
-    rainfall: 1350.6,
-    forest_cover: 3380.3,
-  },
-  {
-    data_id: 5,
-    year: 2023,
-    air_quality_index: 65.1,
-    water_quality_index: 84.7,
-    rainfall: 1380.9,
-    forest_cover: 3360.5,
-  },
-];
+// // Mock environmental data
+// const mockEnvironmentalData: EnvironmentalDataType[] = [
+//   {
+//     data_id: 1,
+//     year: 2019,
+//     air_quality_index: 85.4,
+//     water_quality_index: 72.3,
+//     rainfall: 1250.75,
+//     forest_cover: 3450.25,
+//   },
+//   {
+//     data_id: 2,
+//     year: 2020,
+//     air_quality_index: 78.2,
+//     water_quality_index: 75.6,
+//     rainfall: 1320.5,
+//     forest_cover: 3420.1,
+//   },
+//   {
+//     data_id: 3,
+//     year: 2021,
+//     air_quality_index: 72.5,
+//     water_quality_index: 78.9,
+//     rainfall: 1280.25,
+//     forest_cover: 3400.75,
+//   },
+//   {
+//     data_id: 4,
+//     year: 2022,
+//     air_quality_index: 68.3,
+//     water_quality_index: 82.4,
+//     rainfall: 1350.6,
+//     forest_cover: 3380.3,
+//   },
+//   {
+//     data_id: 5,
+//     year: 2023,
+//     air_quality_index: 65.1,
+//     water_quality_index: 84.7,
+//     rainfall: 1380.9,
+//     forest_cover: 3360.5,
+//   },
+// ];
 
-export default function EnvironmentalDataTable() {
-  const [environmentalData, setEnvironmentalData] = useState<
-    EnvironmentalDataType[]
-  >(mockEnvironmentalData);
-  const [filteredData, setFilteredData] = useState<EnvironmentalDataType[]>(
-    mockEnvironmentalData
-  );
+export default function EnvironmentalDataTable({
+  environmentalList,
+}: {
+  environmentalList: EnvironmentalDataType[];
+}) {
+  const [environmentalData, setEnvironmentalData] =
+    useState<EnvironmentalDataType[]>(environmentalList);
+  const [filteredData, setFilteredData] =
+    useState<EnvironmentalDataType[]>(environmentalList);
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedData, setSelectedData] =
@@ -146,6 +150,11 @@ export default function EnvironmentalDataTable() {
   });
 
   useEffect(() => {
+    setEnvironmentalData(environmentalList);
+    setFilteredData(environmentalList);
+  }, [environmentalList]);
+
+  useEffect(() => {
     const results = environmentalData.filter((data) =>
       data.year.toString().includes(searchTerm)
     );
@@ -154,15 +163,40 @@ export default function EnvironmentalDataTable() {
 
   const onSubmit = async (data) => {
     console.log("Form data:", data);
+    try {
+      const { user } = await getUser();
 
+      const response = await fetch("/api/employees/addenvdata", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          year: data.year,
+          air_quality_index: data.air_quality_index,
+          water_quality_index: data.water_quality_index,
+          rainfall: data.rainfall,
+          forest_cover: data.forest_cover,
+          aadhar_id: user.aadhar_id,
+        }),
+      });
+      if (!response.ok) {
+        alert("Failed to update environmental data");
+      } else {
+        alert("Environmental data added successfully");
+        const newEntry = {
+          ...data,
+          data_id: Math.max(...environmentalData.map((d) => d.data_id)) + 1,
+        };
+
+        setEnvironmentalData([...environmentalData, newEntry]);
+        setFilteredData([...environmentalData, newEntry]);
+      }
+    } catch (e) {
+      console.error(e);
+    }
     // Add the new environmental entry with a generated ID
-    const newEntry = {
-      ...data,
-      data_id: Math.max(...environmentalData.map((d) => d.data_id)) + 1,
-    };
 
-    setEnvironmentalData([...environmentalData, newEntry]);
-    setFilteredData([...environmentalData, newEntry]);
     setIsDialogOpen(false);
     form.reset();
   };
@@ -221,7 +255,7 @@ export default function EnvironmentalDataTable() {
             Air Quality Index
           </h3>
           <span className={`text-sm font-medium ${colorClass}`}>
-            {aqi.toFixed(1)} - {category}
+            {aqi} - {category}
           </span>
         </div>
         <Progress value={percentage} className="h-2" />
@@ -250,7 +284,7 @@ export default function EnvironmentalDataTable() {
             Water Quality Index
           </h3>
           <span className={`text-sm font-medium ${colorClass}`}>
-            {wqi.toFixed(1)} - {category}
+            {wqi} - {category}
           </span>
         </div>
         <Progress value={percentage} className="h-2" />
@@ -351,7 +385,7 @@ export default function EnvironmentalDataTable() {
                             data.air_quality_index
                           )}`}
                         >
-                          {data.air_quality_index.toFixed(2)}
+                          {data.air_quality_index}
                           <span className="text-xs text-slate-500 ml-1">
                             ({getAirQualityCategory(data.air_quality_index)})
                           </span>
@@ -361,17 +395,17 @@ export default function EnvironmentalDataTable() {
                             data.water_quality_index
                           )}`}
                         >
-                          {data.water_quality_index.toFixed(2)}
+                          {data.water_quality_index}
                           <span className="text-xs text-slate-500 ml-1">
                             ({getWaterQualityCategory(data.water_quality_index)}
                             )
                           </span>
                         </TableCell>
                         <TableCell className="text-slate-600">
-                          {data.rainfall.toFixed(2)}
+                          {data.rainfall}
                         </TableCell>
                         <TableCell className="text-slate-600">
-                          {data.forest_cover.toFixed(2)}
+                          {data.forest_cover}
                         </TableCell>
                         <TableCell>
                           <Button
@@ -585,7 +619,7 @@ export default function EnvironmentalDataTable() {
                                   selectedData.air_quality_index
                                 )}`}
                               >
-                                {selectedData.air_quality_index.toFixed(1)}
+                                {selectedData.air_quality_index}
                               </span>
                             </div>
                           </div>
@@ -605,7 +639,7 @@ export default function EnvironmentalDataTable() {
                                   selectedData.water_quality_index
                                 )}`}
                               >
-                                {selectedData.water_quality_index.toFixed(1)}
+                                {selectedData.water_quality_index}
                               </span>
                             </div>
                           </div>
@@ -621,7 +655,7 @@ export default function EnvironmentalDataTable() {
                             <div className="flex items-center gap-2">
                               <DropletIcon className="h-5 w-5 text-blue-500" />
                               <span className="text-xl font-bold text-slate-800">
-                                {selectedData.rainfall.toFixed(1)}
+                                {selectedData.rainfall}
                               </span>
                               <span className="text-xs text-slate-500">mm</span>
                             </div>
@@ -638,7 +672,7 @@ export default function EnvironmentalDataTable() {
                             <div className="flex items-center gap-2">
                               <TreeDeciduous className="h-5 w-5 text-green-500" />
                               <span className="text-xl font-bold text-slate-800">
-                                {selectedData.forest_cover.toFixed(1)}
+                                {selectedData.forest_cover}
                               </span>
                               <span className="text-xs text-slate-500">ha</span>
                             </div>

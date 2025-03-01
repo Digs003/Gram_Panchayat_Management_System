@@ -1,11 +1,15 @@
 "use client";
 
-import CitizenTable from "@/components/citizen_info";
 import { LogOut } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { signOut } from "next-auth/react";
+import { z } from "zod";
 import { getUser } from "@/lib/actions/getUser";
 import { useRouter } from "next/navigation";
+import EnvironmentalDataTable from "@/components/environmental_info";
+import CensusDataTable from "@/components/census_info";
+import AssetManagementTable from "@/components/asset_management";
+import { getEnvironmentData } from "@/lib/actions/getEnvironmentData";
 
 const handleSignOut = async () => {
   await signOut({ callbackUrl: "/api/auth/signin" });
@@ -17,11 +21,38 @@ interface SidebarItem {
 }
 
 const sidebarItems: SidebarItem[] = [
-  { id: "Citizen", label: "Citizen" },
-  { id: "Panchayat Employee", label: "Panchayat Employee" },
-  { id: "Government Monitors", label: "Government Monitors" },
+  { id: "Environmental Data", label: "Environmental Data" },
+  { id: "Census Data", label: "Census Data" },
+  { id: "Asset Management", label: "Asset Management" },
   { id: "Personal Info", label: "Personal Info" },
 ];
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const environmentalSchema = z.object({
+  year: z
+    .number({ required_error: "Year is required" })
+    .int({ message: "Year must be an integer" })
+    .min(1900, { message: "Year must be 1900 or later" })
+    .max(new Date().getFullYear(), { message: "Year cannot be in the future" }),
+  air_quality_index: z
+    .number({ required_error: "Air Quality Index is required" })
+    .min(0, { message: "AQI cannot be negative" })
+    .max(500, { message: "AQI cannot exceed 500" }),
+  water_quality_index: z
+    .number({ required_error: "Water Quality Index is required" })
+    .min(0, { message: "WQI cannot be negative" })
+    .max(100, { message: "WQI cannot exceed 100" }),
+  rainfall: z
+    .number({ required_error: "Rainfall is required" })
+    .min(0, { message: "Rainfall cannot be negative" }),
+  forest_cover: z
+    .number({ required_error: "Forest cover is required" })
+    .min(0, { message: "Forest cover cannot be negative" }),
+});
+
+type EnvironmentalDataType = z.infer<typeof environmentalSchema> & {
+  data_id: number;
+};
 
 const Sidebar = ({
   activeItem,
@@ -113,17 +144,32 @@ const Header = ({ setIsOpen }: { setIsOpen: (isOpen: boolean) => void }) => {
 
 // Main content component
 const Content = ({ activeItem }: { activeItem: string }) => {
+  const [environmentalList, setEnvironmentalList] = useState<
+    EnvironmentalDataType[]
+  >([]);
+  useEffect(() => {
+    const fetchEnvironmentaldata = async () => {
+      try {
+        const data = await getEnvironmentData();
+        setEnvironmentalList(data.user);
+      } catch (e) {
+        console.error("Error fetching citizens", e);
+      }
+    };
+    fetchEnvironmentaldata();
+  }, []);
   switch (activeItem) {
-    case "Citizen":
-      return <CitizenTable />;
-    case "Panchayat Employee":
-      return <CitizenTable />;
-    case "Government Monitors":
-      return <CitizenTable />;
+    case "Environmental Data":
+      console.log(environmentalList);
+      return <EnvironmentalDataTable environmentalList={environmentalList} />;
+    case "Census Data":
+      return <CensusDataTable />;
+    case "Asset Management":
+      return <AssetManagementTable />;
     case "Personal Info":
-      return <CitizenTable />;
+      return <EnvironmentalDataTable environmentalList={environmentalList} />;
     default:
-      return <CitizenTable />;
+      return <EnvironmentalDataTable environmentalList={environmentalList} />;
   }
 };
 
