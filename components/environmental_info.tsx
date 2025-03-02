@@ -79,50 +79,6 @@ type EnvironmentalDataType = z.infer<typeof environmentalSchema> & {
   data_id: number;
 };
 
-// // Mock environmental data
-// const mockEnvironmentalData: EnvironmentalDataType[] = [
-//   {
-//     data_id: 1,
-//     year: 2019,
-//     air_quality_index: 85.4,
-//     water_quality_index: 72.3,
-//     rainfall: 1250.75,
-//     forest_cover: 3450.25,
-//   },
-//   {
-//     data_id: 2,
-//     year: 2020,
-//     air_quality_index: 78.2,
-//     water_quality_index: 75.6,
-//     rainfall: 1320.5,
-//     forest_cover: 3420.1,
-//   },
-//   {
-//     data_id: 3,
-//     year: 2021,
-//     air_quality_index: 72.5,
-//     water_quality_index: 78.9,
-//     rainfall: 1280.25,
-//     forest_cover: 3400.75,
-//   },
-//   {
-//     data_id: 4,
-//     year: 2022,
-//     air_quality_index: 68.3,
-//     water_quality_index: 82.4,
-//     rainfall: 1350.6,
-//     forest_cover: 3380.3,
-//   },
-//   {
-//     data_id: 5,
-//     year: 2023,
-//     air_quality_index: 65.1,
-//     water_quality_index: 84.7,
-//     rainfall: 1380.9,
-//     forest_cover: 3360.5,
-//   },
-// ];
-
 export default function EnvironmentalDataTable({
   environmentalList,
   addOption,

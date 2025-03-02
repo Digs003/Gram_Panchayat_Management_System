@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { format, set } from "date-fns";
+import { format } from "date-fns";
 import {
   CalendarIcon,
   Info,
@@ -76,20 +76,8 @@ const applicationSchema = z.object({
   aadhar_number: z
     .string()
     .length(12, { message: "Aadhaar must be exactly 12 digits." }),
-  annual_income: z.string().refine(
-    (val) => {
-      const num = Number(val);
-      return !isNaN(num) && num >= 0;
-    },
-    { message: "Annual income must be a valid number" }
-  ),
-  household_members: z.string().refine(
-    (val) => {
-      const num = Number(val);
-      return !isNaN(num) && num >= 0;
-    },
-    { message: "Number of household members must be a valid number" }
-  ),
+  annual_income: z.number().nonnegative({ message: "Annual income must be a valid number" }),
+  household_members: z.number().nonnegative({ message: "Number of household members must be a valid number" }),
   other_schemes: z.string().array().optional(),
   financial_assistance: z.enum(["yes", "no"]),
   reason_for_applying: z
@@ -130,8 +118,8 @@ export default function CitizenWelfareSchemes({
       scheme_id: 0,
       full_name: "",
       aadhar_number: "",
-      annual_income: "",
-      household_members: "",
+      annual_income: 0,
+      household_members: 0,
       financial_assistance: "no",
       reason_for_applying: "",
       agree_terms: false,
@@ -165,7 +153,8 @@ export default function CitizenWelfareSchemes({
       full_name: user.name,
       scheme_id: scheme.scheme_id,
       aadhar_number: user.aadhar_id,
-      annual_income: "",
+      annual_income: 0,
+      household_members: 0,
       financial_assistance: "no",
       reason_for_applying: "",
       agree_terms: false,
@@ -360,10 +349,30 @@ export default function CitizenWelfareSchemes({
                             <Button
                               variant="default"
                               size="sm"
-                              className="h-8  bg-yellow-500 border-yellow-200 hover:bg-yellow-50 hover:text-black"
+                              className="h-8  bg-yellow-200 border-yellow-200 hover:bg-yellow-50 text-yellow-800 hover:text-black"
                             >
                               <Info className="h-4 w-4 mr-1" />
                               Pending
+                            </Button>
+                          )}
+                          {scheme.application_status === "accepted" && (
+                            <Button
+                              variant="default"
+                              size="sm"
+                              className="h-8  bg-green-300 border-green-200 hover:bg-green-50 hover:text-black"
+                            >
+                              <Info className="h-4 w-4 mr-1" />
+                              Accepted
+                            </Button>
+                          )}
+                          {scheme.application_status === "rejected" && (
+                            <Button
+                              variant="default"
+                              size="sm"
+                              className="h-8  bg-red-300 border-red-200 hover:bg-red-50 hover:text-black"
+                            >
+                              <Info className="h-4 w-4 mr-1" />
+                              Rejected
                             </Button>
                           )}
                         </div>
@@ -390,7 +399,7 @@ export default function CitizenWelfareSchemes({
               )} mt-2 w-fit`}
             >
               {(selectedScheme?.status?.charAt(0).toUpperCase() ?? "") +
-                selectedScheme?.status.slice(1)}
+                (selectedScheme?.status?.slice(1) ?? "")}
             </Badge>
           </DialogHeader>
           <div className="py-4 space-y-4">
@@ -521,15 +530,21 @@ export default function CitizenWelfareSchemes({
                   <FormField
                     control={applicationForm.control}
                     name="annual_income"
-                    render={({ field }) => (
+                    render={({ field: { value, onChange, ...fieldProps } }) => (
                       <FormItem>
                         <FormLabel className="text-slate-700">
                           Annual Household Income (₹)
                         </FormLabel>
                         <FormControl>
                           <Input
+                            type="number"
                             placeholder="Enter annual income"
-                            {...field}
+                            value={value || ""}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              onChange(val ? parseInt(val, 10) : 0);
+                            }}
+                            {...fieldProps}
                             className="border-slate-200"
                           />
                         </FormControl>
@@ -540,15 +555,21 @@ export default function CitizenWelfareSchemes({
                   <FormField
                     control={applicationForm.control}
                     name="household_members"
-                    render={({ field }) => (
+                    render={({ field: { value, onChange, ...fieldProps } }) => (
                       <FormItem>
                         <FormLabel className="text-slate-700">
                           Number of Household Members
                         </FormLabel>
                         <FormControl>
                           <Input
+                            type="number"
                             placeholder="Enter number of members"
-                            {...field}
+                            value={value || ""}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              onChange(val ? parseInt(val, 10) : 0);
+                            }}
+                            {...fieldProps}
                             className="border-slate-200"
                           />
                         </FormControl>
