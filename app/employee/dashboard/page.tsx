@@ -25,6 +25,13 @@ import { SchemeType } from "@/components/add_scheme";
 import { getAllSchemes } from "@/lib/actions/getAllSchemes";
 import { ApplicationType } from "@/components/scheme_employee";
 import { getAllSchemeApplications } from "@/lib/actions/getAllSchemeApplications";
+import { CertificateTable } from "@/components/certificate";
+import { getAllCertificates } from "@/lib/actions/getAllCertificates";
+import {
+  VaccinationRecord,
+  VaccinationTable,
+} from "@/components/vaccination_table";
+import { getAllVaccinations } from "@/lib/actions/getAllVaccinations";
 
 const handleSignOut = async () => {
   await signOut({ callbackUrl: "/api/auth/signin" });
@@ -43,6 +50,8 @@ const sidebarItems: SidebarItem[] = [
   { id: "Tax", label: "Tax" },
   { id: "Agricultural Data", label: "Agricultural Data" },
   { id: "Welfare Scheme", label: "Welfare Scheme" },
+  { id: "Certificates", label: "Certificates" },
+  { id: "Vaccinations", label: "Vaccinations" },
   { id: "Personal Info", label: "Personal Info" },
 ];
 
@@ -69,7 +78,7 @@ const environmentalSchema = z.object({
     .min(0, { message: "Forest cover cannot be negative" }),
 });
 
-type EnvironmentalDataType = z.infer<typeof environmentalSchema> & {
+export type EnvironmentalDataType = z.infer<typeof environmentalSchema> & {
   data_id: number;
 };
 
@@ -104,7 +113,7 @@ const censusSchema = z.object({
     .min(0, { message: "Rate cannot be negative" }),
 });
 
-type CensusDataType = z.infer<typeof censusSchema> & {
+export type CensusDataType = z.infer<typeof censusSchema> & {
   census_id: number;
 };
 
@@ -126,7 +135,7 @@ const assetSchema = z.object({
     .min(0, { message: "Amount spent must be 0 or greater" }),
 });
 
-type AssetType = z.infer<typeof assetSchema> & {
+export type AssetType = z.infer<typeof assetSchema> & {
   asset_id: number;
 };
 
@@ -192,7 +201,15 @@ const landHoldingSchema = z.object({
 });
 
 // Define the LandHolding type
-type LandHolding = z.infer<typeof landHoldingSchema>;
+export type LandHolding = z.infer<typeof landHoldingSchema>;
+
+type CertificateType = {
+  certificate_id: number;
+  certificate_type: string;
+  issue_date: string;
+  validity_period: string;
+  citizen_id?: number;
+};
 
 const Sidebar = ({
   activeItem,
@@ -295,6 +312,8 @@ const Content = ({ activeItem }: { activeItem: string }) => {
   const [agriList, setAgriList] = useState<LandHolding[]>([]);
   const [schemeList, setSchemeList] = useState<SchemeType[]>([]);
   const [applicationList, setApplicationList] = useState<ApplicationType[]>([]);
+  const [certificateList, setCertificateList] = useState<CertificateType[]>([]);
+  const [vaccinations, setVaccinations] = useState<VaccinationRecord[]>([]);
   useEffect(() => {
     const fetchEnvironmentaldata = async () => {
       try {
@@ -369,6 +388,24 @@ const Content = ({ activeItem }: { activeItem: string }) => {
         console.error("Error fetching applications", e);
       }
     };
+    const fetchCertificates = async () => {
+      try {
+        const data = await getAllCertificates();
+        setCertificateList(data.user);
+      } catch (e) {
+        console.error("Error fetching certificates", e);
+      }
+    };
+    const fetchVaccinations = async () => {
+      try {
+        const data = await getAllVaccinations();
+        setVaccinations(data.user);
+      } catch (e) {
+        console.error("Error fetching vaccinations", e);
+      }
+    };
+    fetchVaccinations();
+    fetchCertificates();
     fetchApplications();
     fetchSchemes();
     fetchAgriData();
@@ -379,6 +416,33 @@ const Content = ({ activeItem }: { activeItem: string }) => {
     fetchCensusData();
     fetchEnvironmentaldata();
   }, []);
+  const handleAddVaccination = async (
+    vaccination: Omit<VaccinationRecord, "vaccine_id">
+  ): Promise<void> => {
+    try {
+      const response = await fetch("/api/employees/addVaccination", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(vaccination),
+      });
+      if (!response.ok) {
+        alert("Failed to add vaccination");
+      } else {
+        alert("Vaccination added successfully");
+        const responseData = await response.json();
+        const newVaccinationWithId = {
+          ...vaccination,
+          vaccine_id: responseData.vaccine_id, // Generate a random ID for demo
+        };
+        setVaccinations([...vaccinations, newVaccinationWithId]);
+      }
+    } catch (e) {
+      console.error("Error adding vaccination", e);
+      alert("Failed to add vaccination");
+    }
+  };
   switch (activeItem) {
     case "Environmental Data":
       console.log(environmentalList);
@@ -398,12 +462,24 @@ const Content = ({ activeItem }: { activeItem: string }) => {
       ) : (
         <div>Loading...</div>
       );
+    case "Certificates":
+      return (
+        <CertificateTable certificates={certificateList} usermode={false} />
+      );
     case "Tax":
       return <TaxManagementWrapper citizenList={citizens} taxList={taxList} />;
     case "Citizen":
       return <CitizenTable citizenList={citizens} addOption={false} />;
     case "Agricultural Data":
       return <LandHoldingsTable landHoldings={agriList} citizen={false} />;
+    case "Vaccinations":
+      return (
+        <VaccinationTable
+          vaccinations={vaccinations}
+          adminMode={true}
+          onAddVaccination={handleAddVaccination}
+        />
+      );
     case "Welfare Scheme":
       return (
         <WelfareSchemeWrapper

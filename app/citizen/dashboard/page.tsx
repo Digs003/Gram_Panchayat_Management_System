@@ -19,6 +19,13 @@ import { getAgriData } from "@/lib/actions/getAgriData";
 import CitizenWelfareSchemes from "@/components/schme_citizen";
 import { SchemeType } from "@/components/add_scheme";
 import { getAllSchemes } from "@/lib/actions/getAllSchemes";
+import { CertificateTable } from "@/components/certificate";
+import { getCertificates } from "@/lib/actions/getCertificates";
+import {
+  VaccinationRecord,
+  VaccinationTable,
+} from "@/components/vaccination_table";
+import { getVaccinations } from "@/lib/actions/getVaccinations";
 
 const handleSignOut = async () => {
   await signOut({ callbackUrl: "/api/auth/signin" });
@@ -68,6 +75,8 @@ const sidebarItems: SidebarItem[] = [
   { id: "Tax Details", label: "Tax Details" },
   { id: "Agricultural Land", label: "Agricultural Land" },
   { id: "Welfare Schemes", label: "Welfare Schemes" },
+  { id: "Certificates", label: "Certificates" },
+  { id: "Vaccinations", label: "Vaccinations" },
   { id: "Environmental Data", label: "Environmental Data" },
   { id: "Census Data", label: "Census Data" },
   { id: "Asset Management", label: "Asset Management" },
@@ -166,6 +175,13 @@ type TaxType = {
   payment_date: Date | null;
 };
 
+type CertificateType = {
+  certificate_id: number;
+  certificate_type: string;
+  issue_date: string;
+  validity_period: string;
+  citizen_id?: number;
+};
 const Sidebar = ({
   activeItem,
   setActiveItem,
@@ -265,6 +281,10 @@ const Content = ({ activeItem }: { activeItem: string }) => {
   const [personalInfo, setPersonalInfo] = useState<personalInfoType>();
   const [agriData, setAgriData] = useState<LandHolding[]>([]);
   const [schemeList, setSchemeList] = useState<SchemeType[]>([]);
+  const [certificateList, setCertificateList] = useState<CertificateType[]>([]);
+  const [vaccinationList, setVaccinationList] = useState<VaccinationRecord[]>(
+    []
+  );
 
   useEffect(() => {
     const fetchEnvironmentaldata = async () => {
@@ -323,7 +343,24 @@ const Content = ({ activeItem }: { activeItem: string }) => {
         console.error("Error fetching welfare schemes", e);
       }
     };
-
+    const fetchCertificates = async () => {
+      try {
+        const data = await getCertificates();
+        setCertificateList(data.user);
+      } catch (e) {
+        console.error("Error fetching certificates", e);
+      }
+    };
+    const fetchVaccinations = async () => {
+      try {
+        const data = await getVaccinations();
+        setVaccinationList(data.user);
+      } catch (e) {
+        console.error("Error fetching certificates", e);
+      }
+    };
+    fetchVaccinations();
+    fetchCertificates();
     fetchWelfareSchemes();
     fetchAgriData();
     fetchPersonalInfo();
@@ -332,6 +369,33 @@ const Content = ({ activeItem }: { activeItem: string }) => {
     fetchCensusData();
     fetchEnvironmentaldata();
   }, []);
+  const handleAddCertificate = async (
+    newCertificate: Omit<CertificateType, "certificate_id">
+  ) => {
+    try {
+      const response = await fetch("/api/citizens/addCertificate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newCertificate),
+      });
+      if (!response.ok) {
+        alert("Failed to add certificate");
+      } else {
+        alert("Certificate added successfully");
+        const responseData = await response.json();
+        const newCertificateWithId = {
+          ...newCertificate,
+          certificate_id: responseData.certificate_id, // Generate a random ID for demo
+        };
+        setCertificateList([...certificateList, newCertificateWithId]);
+      }
+    } catch (e) {
+      console.error("Error adding certificate", e);
+      alert("Failed to add certificate");
+    }
+  };
   switch (activeItem) {
     case "Tax Details":
       return <TaxTable taxList={taxList} />;
@@ -345,6 +409,18 @@ const Content = ({ activeItem }: { activeItem: string }) => {
         <EnvironmentalDataTable
           environmentalList={environmentalList}
           addOption={false}
+        />
+      );
+    case "Vaccinations":
+      return (
+        <VaccinationTable vaccinations={vaccinationList} adminMode={false} />
+      );
+    case "Certificates":
+      return (
+        <CertificateTable
+          certificates={certificateList}
+          usermode={true}
+          onAddCertificate={handleAddCertificate}
         />
       );
     case "Census Data":

@@ -204,6 +204,8 @@ export default function SignUpForm() {
           router.push("/api/auth/signin");
         } else if (user.occupation === "System Administrator") {
           router.push("/admin/dashboard");
+        } else if (user.occupation === "Government Monitor") {
+          router.push("/monitor/dashboard");
         } else {
           router.push("/api/auth/signin");
         }

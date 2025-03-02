@@ -76,8 +76,12 @@ const applicationSchema = z.object({
   aadhar_number: z
     .string()
     .length(12, { message: "Aadhaar must be exactly 12 digits." }),
-  annual_income: z.number().nonnegative({ message: "Annual income must be a valid number" }),
-  household_members: z.number().nonnegative({ message: "Number of household members must be a valid number" }),
+  annual_income: z
+    .number()
+    .nonnegative({ message: "Annual income must be a valid number" }),
+  household_members: z.number().nonnegative({
+    message: "Number of household members must be a valid number",
+  }),
   other_schemes: z.string().array().optional(),
   financial_assistance: z.enum(["yes", "no"]),
   reason_for_applying: z
@@ -355,23 +359,23 @@ export default function CitizenWelfareSchemes({
                               Pending
                             </Button>
                           )}
-                          {scheme.application_status === "accepted" && (
+                          {scheme.application_status === "approved" && (
                             <Button
                               variant="default"
                               size="sm"
-                              className="h-8  bg-green-300 border-green-200 hover:bg-green-50 hover:text-black"
+                              className="h-8  bg-green-300 text-green-600 hover:bg-green-50 hover:text-black"
                             >
-                              <Info className="h-4 w-4 mr-1" />
-                              Accepted
+                              <CheckCircle className="h-4 w-4 mr-1" />
+                              Approved
                             </Button>
                           )}
                           {scheme.application_status === "rejected" && (
                             <Button
                               variant="default"
                               size="sm"
-                              className="h-8  bg-red-300 border-red-200 hover:bg-red-50 hover:text-black"
+                              className="h-8 bg-red-300 text-red-600 hover:bg-red-50 hover:text-black"
                             >
-                              <Info className="h-4 w-4 mr-1" />
+                              <AlertCircle className="h-4 w-4 mr-1" />
                               Rejected
                             </Button>
                           )}

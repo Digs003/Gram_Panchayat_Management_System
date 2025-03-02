@@ -276,7 +276,7 @@ export default function WelfareEmployee({
     setIsConfirmDialogOpen(true);
   };
 
-  const handleConfirmAction = () => {
+  const handleConfirmAction = async () => {
     // Update application status based on action
     if (!selectedApplication) return;
     const updatedApplications = applications.map((app) => {
@@ -288,8 +288,27 @@ export default function WelfareEmployee({
       }
       return app;
     });
-
-    setApplications(updatedApplications);
+    try {
+      const response = await fetch("/api/employees/approvescheme", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          enrollment_id: selectedApplication.enrollment_id,
+          status: actionType === "approve" ? "approved" : "rejected",
+        }),
+      });
+      if (response.ok) {
+        alert("Updated application status successfully");
+        setApplications(updatedApplications);
+      } else {
+        alert("Failed to update application status");
+      }
+    } catch (error) {
+      console.error("Failed to update application status", error);
+      alert("Failed to update application status");
+    }
     setIsConfirmDialogOpen(false);
   };
 
