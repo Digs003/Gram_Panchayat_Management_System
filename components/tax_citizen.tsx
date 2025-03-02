@@ -31,6 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { taxTypes } from "./tax_allocate";
 
 type TaxType = {
   tax_id: number;
@@ -84,17 +85,41 @@ export default function TaxTable({ taxList }: { taxList: TaxType[] }) {
     setIsPaymentDialogOpen(true);
   };
 
-  const confirmPayment = () => {
+  const confirmPayment = async () => {
     if (confirmationText.toLowerCase() === "confirm" && selectedTax) {
-      const updatedTaxData = taxData.map((tax) =>
-        tax.tax_id === selectedTax.tax_id
-          ? { ...tax, payment_date: new Date() }
-          : tax
-      );
-      setTaxData(updatedTaxData);
+      try {
+        const response = await fetch(`/api/citizens/paytax`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            tax_id: selectedTax.tax_id,
+            payment_date: new Date(),
+          }),
+        });
+        if (!response.ok) {
+          alert("Failed to pay tax. Please try again later.");
+        } else {
+          alert("Tax paid successfully");
+          const updatedTaxData = taxData.map((tax) =>
+            tax.tax_id === selectedTax.tax_id
+              ? { ...tax, payment_date: new Date() }
+              : tax
+          );
+          setTaxData(updatedTaxData);
+        }
+      } catch (e) {
+        console.error(e);
+        alert("Failed to pay tax. Please try again later.");
+      }
       setIsPaymentDialogOpen(false);
       setConfirmationText("");
     }
+  };
+  const getTaxLabel = (taxType: string) => {
+    const tax = taxTypes.find((t) => t.value === taxType);
+    return tax ? tax.label : taxType;
   };
 
   return (
@@ -195,22 +220,18 @@ export default function TaxTable({ taxList }: { taxList: TaxType[] }) {
                       className="hover:bg-slate-50 transition-colors"
                     >
                       <TableCell className="font-medium text-slate-800">
-                        {tax.tax_type}
+                        {getTaxLabel(tax.tax_type)}
                       </TableCell>
                       <TableCell className="text-slate-600">
                         {tax.amount}
                       </TableCell>
                       <TableCell className="text-slate-600">
-                        {tax.due_date instanceof Date
-                          ? tax.due_date.toISOString().split("T")[0] // "YYYY-MM-DD"
-                          : tax.due_date}
+                        {new Date(tax.due_date).toLocaleDateString()}
                       </TableCell>
                       <TableCell className="text-slate-600">
                         {tax.payment_date
-                          ? tax.payment_date instanceof Date
-                            ? tax.payment_date.toISOString().split("T")[0]
-                            : tax.payment_date
-                          : "-"}
+                          ? new Date(tax.payment_date).toLocaleDateString()
+                          : "N/A"}
                       </TableCell>
                       <TableCell>
                         {tax.payment_date ? (
@@ -267,7 +288,7 @@ export default function TaxTable({ taxList }: { taxList: TaxType[] }) {
                 </p>
                 <p>
                   <strong>Due Date:</strong>{" "}
-                  {selectedTax.due_date.toLocaleDateString()}
+                  {new Date(selectedTax.due_date).toLocaleDateString()}
                 </p>
               </div>
               <div className="space-y-2">

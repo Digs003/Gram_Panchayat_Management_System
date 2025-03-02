@@ -91,7 +91,7 @@ const cropTypes = [
 
 // Define the form schema for land holding
 const landHoldingSchema = z.object({
-  record_id: z.string().min(1, { message: "Plot number is required" }),
+  record_id: z.string().min(0, { message: "Plot number is required" }),
   land_area: z.coerce
     .number()
     .positive({ message: "Land area must be positive" }),
@@ -218,8 +218,10 @@ const COLORS = [
 
 export default function LandHoldingsTable({
   landHoldings = sampleLandHoldings,
+  citizen,
 }: {
   landHoldings?: LandHolding[];
+  citizen: boolean;
 }) {
   const [data, setData] = useState<LandHolding[]>(landHoldings);
   const [filteredData, setFilteredData] = useState<LandHolding[]>(landHoldings);
@@ -344,25 +346,41 @@ export default function LandHoldingsTable({
   };
 
   // Handle adding new land holding
-  const onAddSubmit = (formData: LandHolding) => {
+  const onAddSubmit = async (formData: LandHolding) => {
     // Check if plot number already exists
-    if (data.some((item) => item.record_id === formData.record_id)) {
-      addForm.setError("record_id", {
-        type: "manual",
-        message: "Plot number already exists",
+    try {
+      const response = await fetch("/api/employees/addagri", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          land_area: formData.land_area,
+          crop_type: formData.crop_type,
+          valuation: formData.valuation,
+          _yield: formData.yield,
+          owner_name: formData.owner_name,
+        }),
       });
-      return;
+      if (response.ok) {
+        alert("Land Holding Added Successfully");
+        const newData = [...data, formData];
+        setData(newData);
+      } else {
+        alert("Error Adding Land Holding");
+      }
+    } catch (e) {
+      console.error("Error Adding Land Holding", e);
+      alert("Error Adding Land Holding");
     }
-
-    const newData = [...data, formData];
-    setData(newData);
     setIsAddDialogOpen(false);
     addForm.reset();
   };
 
   // Handle editing land holding
-  const onEditSubmit = (formData: LandHolding) => {
+  const onEditSubmit = async (formData: LandHolding) => {
     // Check if plot number already exists and is not the current one
+    console.log(formData);
     if (
       formData.record_id !== currentLandHolding?.record_id &&
       data.some((item) => item.record_id === formData.record_id)
@@ -373,31 +391,60 @@ export default function LandHoldingsTable({
       });
       return;
     }
-
-    const newData = data.map((item) =>
-      item.record_id === currentLandHolding?.record_id ? formData : item
-    );
-    setData(newData);
+    try {
+      const response = await fetch("/api/citizens/updateagri", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          record_id: currentLandHolding?.record_id,
+          land_area: formData.land_area,
+          crop_type: formData.crop_type,
+          valuation: formData.valuation,
+          _yield: formData.yield,
+        }),
+      });
+      if (response.ok) {
+        alert("Land Holding Updated Successfully");
+        const newData = data.map((item) =>
+          item.record_id === currentLandHolding?.record_id ? formData : item
+        );
+        setData(newData);
+      } else {
+        alert("Error Updating Land Holding");
+      }
+    } catch (e) {
+      console.error("Error Updating Land Holding", e);
+      alert("Error Updating Land Holding");
+    }
     setIsEditDialogOpen(false);
     setCurrentLandHolding(null);
   };
 
-  // Open edit dialog with current land holding data
   const openEditDialog = (landHolding: LandHolding) => {
     setCurrentLandHolding(landHolding);
     editForm.reset(landHolding);
     setIsEditDialogOpen(true);
   };
 
+  // Handle editing land holding
+
   // Generate visualization data
   const generateCropDistributionData = () => {
     const cropCounts: Record<string, number> = {};
+    const processedRecords = new Set<string>(); // Track processed record_ids
 
     data.forEach((item) => {
-      if (cropCounts[item.crop_type]) {
-        cropCounts[item.crop_type] += parseFloat(item.land_area.toString());
-      } else {
-        cropCounts[item.crop_type] = parseFloat(item.land_area.toString());
+      if (!processedRecords.has(item.record_id)) {
+        // Only process unique record_ids
+        processedRecords.add(item.record_id);
+
+        if (cropCounts[item.crop_type]) {
+          cropCounts[item.crop_type] += parseFloat(item.land_area.toString());
+        } else {
+          cropCounts[item.crop_type] = parseFloat(item.land_area.toString());
+        }
       }
     });
 
@@ -459,20 +506,28 @@ export default function LandHoldingsTable({
     let totalArea = 0;
     let totalValue = 0;
     let totalYield = 0;
+    const processedRecords = new Set<string>(); // Track processed record_ids
 
     data.forEach((item) => {
-      totalArea += parseFloat(item.land_area.toString());
-      totalValue += parseFloat(item.valuation.toString());
-      totalYield += parseFloat(item.yield.toString());
+      if (!processedRecords.has(item.record_id)) {
+        // Only process unique record_ids
+        processedRecords.add(item.record_id);
+
+        totalArea += parseFloat(item.land_area.toString());
+        totalValue += parseFloat(item.valuation.toString());
+        totalYield += parseFloat(item.yield.toString());
+      }
     });
+
+    const uniqueRecordCount = processedRecords.size; // Count unique records
 
     return {
       totalArea,
       totalValue,
       totalYield,
-      averageArea: totalArea / data.length,
-      averageValue: totalValue / data.length,
-      averageYield: totalYield / data.length,
+      averageArea: uniqueRecordCount ? totalArea / uniqueRecordCount : 0,
+      averageValue: uniqueRecordCount ? totalValue / uniqueRecordCount : 0,
+      averageYield: uniqueRecordCount ? totalYield / uniqueRecordCount : 0,
     };
   };
 
@@ -497,13 +552,15 @@ export default function LandHoldingsTable({
               <PieChart className="h-4 w-4" />
               <span className="hidden sm:inline">View Analytics</span>
             </Button>
-            <Button
-              onClick={() => setIsAddDialogOpen(true)}
-              className="flex items-center gap-1"
-            >
-              <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">Add Land Holding</span>
-            </Button>
+            {!citizen && (
+              <Button
+                onClick={() => setIsAddDialogOpen(true)}
+                className="flex items-center gap-1"
+              >
+                <Plus className="h-4 w-4" />
+                <span className="hidden sm:inline">Add Land Holding</span>
+              </Button>
+            )}
           </div>
         </CardHeader>
         <CardContent>
@@ -652,12 +709,16 @@ export default function LandHoldingsTable({
                   <TableHead className="font-semibold text-slate-700">
                     Yield
                   </TableHead>
-                  <TableHead className="font-semibold text-slate-700">
-                    Owner Name
-                  </TableHead>
-                  <TableHead className="font-semibold text-slate-700 text-right">
-                    Actions
-                  </TableHead>
+                  {!citizen && (
+                    <TableHead className="font-semibold text-slate-700">
+                      Owner Name
+                    </TableHead>
+                  )}
+                  {citizen && (
+                    <TableHead className="font-semibold text-slate-700 text-right">
+                      Actions
+                    </TableHead>
+                  )}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -673,7 +734,7 @@ export default function LandHoldingsTable({
                 ) : (
                   filteredData.map((holding) => (
                     <TableRow
-                      key={holding.record_id}
+                      key={`${holding.record_id}-${holding.owner_name}`}
                       className="hover:bg-slate-50 transition-colors"
                     >
                       <TableCell className="font-medium text-slate-800">
@@ -691,20 +752,27 @@ export default function LandHoldingsTable({
                       <TableCell className="text-slate-600">
                         {holding.yield}
                       </TableCell>
-                      <TableCell className="text-slate-600">
-                        {holding.owner_name}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => openEditDialog(holding)}
-                          className="h-8 px-2 text-slate-700"
-                        >
-                          <Edit className="h-4 w-4" />
-                          <span className="sr-only">Edit</span>
-                        </Button>
-                      </TableCell>
+                      {!citizen && (
+                        <TableCell className="text-slate-600">
+                          {holding.owner_name}
+                        </TableCell>
+                      )}
+
+                      {citizen && (
+                        <>
+                          <TableCell className="text-right">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => openEditDialog(holding)}
+                              className="h-8 px-2 text-slate-700"
+                            >
+                              <Edit className="h-4 w-4" />
+                              <span className="sr-only">Edit</span>
+                            </Button>
+                          </TableCell>
+                        </>
+                      )}
                     </TableRow>
                   ))
                 )}
@@ -733,20 +801,6 @@ export default function LandHoldingsTable({
               onSubmit={addForm.handleSubmit(onAddSubmit)}
               className="space-y-4"
             >
-              <FormField
-                control={addForm.control}
-                name="record_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Record ID</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g., PLT-013" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={addForm.control}
@@ -843,7 +897,12 @@ export default function LandHoldingsTable({
                 >
                   Cancel
                 </Button>
-                <Button type="submit">Add Land Holding</Button>
+                <Button
+                  type="submit"
+                  onClick={() => console.log(addForm.formState.errors)}
+                >
+                  Add Land Holding
+                </Button>
               </DialogFooter>
             </form>
           </Form>
@@ -864,20 +923,6 @@ export default function LandHoldingsTable({
               onSubmit={editForm.handleSubmit(onEditSubmit)}
               className="space-y-4"
             >
-              <FormField
-                control={editForm.control}
-                name="record_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Record ID</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={editForm.control}
@@ -952,20 +997,6 @@ export default function LandHoldingsTable({
                 />
               </div>
 
-              <FormField
-                control={editForm.control}
-                name="owner_name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Owner Name</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
               <DialogFooter>
                 <Button
                   type="button"
@@ -974,7 +1005,19 @@ export default function LandHoldingsTable({
                 >
                   Cancel
                 </Button>
-                <Button type="submit">Save Changes</Button>
+                <Button
+                  type="submit"
+                  onClick={() => {
+                    editForm.setValue(
+                      "record_id",
+                      String(currentLandHolding?.record_id || "")
+                    ); // Correctly set record_id
+                    editForm.setValue("owner_name", "xx"); // Reset owner_name properly
+                    console.log(editForm.formState.errors);
+                  }}
+                >
+                  Save Changes
+                </Button>
               </DialogFooter>
             </form>
           </Form>
@@ -1093,16 +1136,22 @@ export default function LandHoldingsTable({
                             (item) => item.crop_type === crop.name
                           );
 
-                          const totalValuation = cropData.reduce(
+                          const uniqueCropData = Array.from(
+                            new Map(
+                              cropData.map((item) => [item.record_id, item])
+                            ).values()
+                          );
+
+                          const totalValuation = uniqueCropData.reduce(
                             (sum, item) =>
                               sum +
-                              parseFloat(item.valuation.toString() || "0"), // Ensure conversion to number
+                              parseFloat(item.valuation.toString() || "0"),
                             0
                           );
 
-                          const totalYield = cropData.reduce(
+                          const totalYield = uniqueCropData.reduce(
                             (sum, item) =>
-                              sum + parseFloat(item.yield.toString() || "0"), // Ensure conversion to number
+                              sum + parseFloat(item.yield.toString() || "0"),
                             0
                           );
 
@@ -1112,8 +1161,10 @@ export default function LandHoldingsTable({
                                 {crop.name}
                               </TableCell>
                               <TableCell>{crop.value.toFixed(2)}</TableCell>
-                              <TableCell>₹{totalValuation}</TableCell>
-                              <TableCell>{totalYield}</TableCell>
+                              <TableCell>
+                                ₹{totalValuation.toFixed(2)}
+                              </TableCell>
+                              <TableCell>{totalYield.toFixed(2)}</TableCell>
                             </TableRow>
                           );
                         })}
@@ -1239,7 +1290,9 @@ export default function LandHoldingsTable({
                             <dt className="font-medium text-slate-600">
                               Number of Plots:
                             </dt>
-                            <dd>{data.length}</dd>
+                            <dd>
+                              {new Set(data.map((item) => item.record_id)).size}
+                            </dd>
                           </div>
                         </dl>
                       </CardContent>

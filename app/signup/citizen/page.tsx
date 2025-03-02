@@ -80,7 +80,7 @@ const formSchema = z
     path: ["confirmPassword"],
   });
 
-const occupations = [
+export const occupations = [
   { label: "Farmer", value: "farmer" },
   { label: "Agricultural Laborer", value: "agricultural_laborer" },
   { label: "Fisherman", value: "fisherman" },

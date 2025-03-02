@@ -283,7 +283,7 @@ export default function CensusDataTable({
               </span>
             </div>
             <p className="text-lg font-semibold text-green-600">
-              {naturalGrowthRate}
+              {naturalGrowthRate.toFixed(2)}
             </p>
           </div>
         </div>

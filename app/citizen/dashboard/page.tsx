@@ -13,6 +13,12 @@ import { getAssetData } from "@/lib/actions/getAssetData";
 import TaxTable from "@/components/tax_citizen";
 import { getTaxData } from "@/lib/actions/getTaxData";
 import PersonalProfile from "@/components/personal_info";
+import { getUser } from "@/lib/actions/getUser";
+import LandHoldingsTable from "@/components/agri_info";
+import { getAgriData } from "@/lib/actions/getAgriData";
+import CitizenWelfareSchemes from "@/components/schme_citizen";
+import { SchemeType } from "@/components/add_scheme";
+import { getAllSchemes } from "@/lib/actions/getAllSchemes";
 
 const handleSignOut = async () => {
   await signOut({ callbackUrl: "/api/auth/signin" });
@@ -23,8 +29,45 @@ interface SidebarItem {
   label: string;
 }
 
+type personalInfoType = {
+  admin_id: number | null;
+  citizen_id: number;
+  date_of_joining: string;
+  email: string | null;
+  name: string;
+  gender: string;
+  dob: string;
+  contact_number: string;
+  occupation: string;
+  age: number;
+  educational_qualification: string;
+  aadhar_id: string;
+  position: string | null;
+  member_id: number | null;
+  monitor_id: number | null;
+};
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const landHoldingSchema = z.object({
+  record_id: z.string().min(0, { message: "Plot number is required" }),
+  land_area: z.coerce
+    .number()
+    .positive({ message: "Land area must be positive" }),
+  crop_type: z.string().min(1, { message: "Crop type is required" }),
+  valuation: z.coerce
+    .number()
+    .positive({ message: "Valuation must be positive" }),
+  yield: z.coerce.number().positive({ message: "Yield must be positive" }),
+  owner_name: z.string().min(1, { message: "Owner name is required" }),
+});
+
+// Define the LandHolding type
+type LandHolding = z.infer<typeof landHoldingSchema>;
+
 const sidebarItems: SidebarItem[] = [
   { id: "Tax Details", label: "Tax Details" },
+  { id: "Agricultural Land", label: "Agricultural Land" },
+  { id: "Welfare Schemes", label: "Welfare Schemes" },
   { id: "Environmental Data", label: "Environmental Data" },
   { id: "Census Data", label: "Census Data" },
   { id: "Asset Management", label: "Asset Management" },
@@ -219,6 +262,9 @@ const Content = ({ activeItem }: { activeItem: string }) => {
   const [censusList, setCensusList] = useState<CensusDataType[]>([]);
   const [assetList, setAssetList] = useState<AssetType[]>([]);
   const [taxList, setTaxList] = useState<TaxType[]>([]);
+  const [personalInfo, setPersonalInfo] = useState<personalInfoType>();
+  const [agriData, setAgriData] = useState<LandHolding[]>([]);
+  const [schemeList, setSchemeList] = useState<SchemeType[]>([]);
 
   useEffect(() => {
     const fetchEnvironmentaldata = async () => {
@@ -253,6 +299,34 @@ const Content = ({ activeItem }: { activeItem: string }) => {
         console.error("Error fetching citizens", e);
       }
     };
+    const fetchPersonalInfo = async () => {
+      try {
+        const data = await getUser();
+        setPersonalInfo(data.user);
+      } catch (e) {
+        console.error("Error fetching citizens", e);
+      }
+    };
+    const fetchAgriData = async () => {
+      try {
+        const data = await getAgriData();
+        setAgriData(data.user);
+      } catch (e) {
+        console.error("Error fetching citizens", e);
+      }
+    };
+    const fetchWelfareSchemes = async () => {
+      try {
+        const data = await getAllSchemes();
+        setSchemeList(data.user);
+      } catch (e) {
+        console.error("Error fetching welfare schemes", e);
+      }
+    };
+
+    fetchWelfareSchemes();
+    fetchAgriData();
+    fetchPersonalInfo();
     fetchTaxData();
     fetchAssetData();
     fetchCensusData();
@@ -261,6 +335,10 @@ const Content = ({ activeItem }: { activeItem: string }) => {
   switch (activeItem) {
     case "Tax Details":
       return <TaxTable taxList={taxList} />;
+    case "Agricultural Land":
+      return <LandHoldingsTable landHoldings={agriData} citizen={true} />;
+    case "Welfare Schemes":
+      return <CitizenWelfareSchemes schemeList={schemeList} />;
     case "Environmental Data":
       console.log(environmentalList);
       return (
@@ -274,7 +352,12 @@ const Content = ({ activeItem }: { activeItem: string }) => {
     case "Asset Management":
       return <AssetManagementTable assetList={assetList} addOption={false} />;
     case "Personal Info":
-      return <PersonalProfile />;
+      return personalInfo ? (
+        <PersonalProfile personalInfo={personalInfo} type={"Citizen"} />
+      ) : (
+        <div>Loading...</div>
+      );
+
     default:
       return <TaxTable taxList={taxList} />;
   }

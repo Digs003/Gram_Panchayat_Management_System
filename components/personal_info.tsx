@@ -20,6 +20,7 @@ import { Separator } from "@/components/ui/separator";
 
 import { educationalQualifications as qualifications } from "@/app/signup/citizen/page";
 import { PORs as positions } from "@/app/signup/employee/page";
+import { occupations } from "@/app/signup/citizen/page";
 type personalInfoType = {
   admin_id: number | null;
   citizen_id: number;
@@ -105,6 +106,10 @@ export default function PersonalProfile({
     const position = positions.find((p) => p.value === value);
     return position ? position.label : value;
   };
+  const getOccupationLabel = (value) => {
+    const occupation = occupations.find((o) => o.value === value);
+    return occupation ? occupation.label : value;
+  };
 
   return (
     <div className="container mx-auto py-8 px-4">
@@ -138,7 +143,7 @@ export default function PersonalProfile({
                   Citizen ID: {admin.citizen_id}
                 </Badge>
                 <Badge className="bg-primary/80 hover:bg-primary px-3 py-1">
-                  {admin.occupation || "Administrator"}
+                  {getOccupationLabel(admin.occupation) || "Administrator"}
                 </Badge>
               </div>
             </div>
@@ -238,35 +243,40 @@ export default function PersonalProfile({
               <div className="grid grid-cols-3 gap-1">
                 <span className="text-muted-foreground">Occupation</span>
                 <span className="col-span-2">
-                  {admin.occupation || "Unemployed"}
+                  {getOccupationLabel(admin.occupation) || "Unemployed"}
                 </span>
               </div>
-              <Separator />
+              {type != "Citizen" && (
+                <>
+                  <Separator />
 
-              <div className="grid grid-cols-3 gap-1">
-                <span className="text-muted-foreground">Joined On</span>
-                <span className="col-span-2">
-                  {formatDate(admin.date_of_joining)}
-                </span>
-              </div>
-              <Separator />
+                  <div className="grid grid-cols-3 gap-1">
+                    <span className="text-muted-foreground">Joined On</span>
+                    <span className="col-span-2">
+                      {formatDate(admin.date_of_joining)}
+                    </span>
+                  </div>
+                  <Separator />
 
-              <div className="grid grid-cols-3 gap-1">
-                <span className="text-muted-foreground">Service</span>
-                <span className="col-span-2">
-                  {(() => {
-                    const joinDate = new Date(admin.date_of_joining);
-                    const today = new Date();
-                    const years = today.getFullYear() - joinDate.getFullYear();
-                    const months = today.getMonth() - joinDate.getMonth();
+                  <div className="grid grid-cols-3 gap-1">
+                    <span className="text-muted-foreground">Service</span>
+                    <span className="col-span-2">
+                      {(() => {
+                        const joinDate = new Date(admin.date_of_joining);
+                        const today = new Date();
+                        const years =
+                          today.getFullYear() - joinDate.getFullYear();
+                        const months = today.getMonth() - joinDate.getMonth();
 
-                    if (months < 0) {
-                      return `${years - 1} years, ${months + 12} months`;
-                    }
-                    return `${years} years, ${months} months`;
-                  })()}
-                </span>
-              </div>
+                        if (months < 0) {
+                          return `${years - 1} years, ${months + 12} months`;
+                        }
+                        return `${years} years, ${months} months`;
+                      })()}
+                    </span>
+                  </div>
+                </>
+              )}
               {type == "Employee" && (
                 <>
                   <Separator />

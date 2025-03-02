@@ -20,6 +20,11 @@ import TaxManagementWrapper from "@/components/tax_management";
 import { getAllTax } from "@/lib/actions/getAllTax";
 import LandHoldingsTable from "@/components/agri_info";
 import { getAllAgriData } from "@/lib/actions/getAllAgriData";
+import WelfareSchemeWrapper from "@/components/scheme_wrapper";
+import { SchemeType } from "@/components/add_scheme";
+import { getAllSchemes } from "@/lib/actions/getAllSchemes";
+import { ApplicationType } from "@/components/scheme_employee";
+import { getAllSchemeApplications } from "@/lib/actions/getAllSchemeApplications";
 
 const handleSignOut = async () => {
   await signOut({ callbackUrl: "/api/auth/signin" });
@@ -37,6 +42,7 @@ const sidebarItems: SidebarItem[] = [
   { id: "Citizen", label: "Citizen" },
   { id: "Tax", label: "Tax" },
   { id: "Agricultural Data", label: "Agricultural Data" },
+  { id: "Welfare Scheme", label: "Welfare Scheme" },
   { id: "Personal Info", label: "Personal Info" },
 ];
 
@@ -287,6 +293,8 @@ const Content = ({ activeItem }: { activeItem: string }) => {
   const [personalInfo, setPersonalInfo] = useState<personalInfoType>();
   const [taxList, setTaxList] = useState<TaxType[]>([]);
   const [agriList, setAgriList] = useState<LandHolding[]>([]);
+  const [schemeList, setSchemeList] = useState<SchemeType[]>([]);
+  const [applicationList, setApplicationList] = useState<ApplicationType[]>([]);
   useEffect(() => {
     const fetchEnvironmentaldata = async () => {
       try {
@@ -345,6 +353,24 @@ const Content = ({ activeItem }: { activeItem: string }) => {
         console.error("Error fetching agri data", e);
       }
     };
+    const fetchSchemes = async () => {
+      try {
+        const data = await getAllSchemes();
+        setSchemeList(data.user);
+      } catch (e) {
+        console.error("Error fetching schemes", e);
+      }
+    };
+    const fetchApplications = async () => {
+      try {
+        const data = await getAllSchemeApplications();
+        setApplicationList(data.user);
+      } catch (e) {
+        console.error("Error fetching applications", e);
+      }
+    };
+    fetchApplications();
+    fetchSchemes();
     fetchAgriData();
     fetchTaxData();
     fetchPersonalInfo();
@@ -377,7 +403,14 @@ const Content = ({ activeItem }: { activeItem: string }) => {
     case "Citizen":
       return <CitizenTable citizenList={citizens} addOption={false} />;
     case "Agricultural Data":
-      return <LandHoldingsTable landHoldings={agriList} />;
+      return <LandHoldingsTable landHoldings={agriList} citizen={false} />;
+    case "Welfare Scheme":
+      return (
+        <WelfareSchemeWrapper
+          schemeList={schemeList}
+          applicationList={applicationList}
+        />
+      );
     default:
       return (
         <EnvironmentalDataTable
