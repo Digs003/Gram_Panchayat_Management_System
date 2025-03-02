@@ -1,3 +1,4 @@
+import LandingPage from "@/components/landing_page";
 import { getUser } from "@/lib/actions/getUser";
 
 async function getDetails() {
@@ -11,9 +12,10 @@ export default async function Appbar() {
   console.log(user);
   return (
     <>
-      <div>
+      {/* <div>
         {user ? <p>Welcome, {user.name}!</p> : <p>You are not signed in.</p>}
-      </div>
+      </div> */}
+      <LandingPage user={user} />
     </>
   );
 }
